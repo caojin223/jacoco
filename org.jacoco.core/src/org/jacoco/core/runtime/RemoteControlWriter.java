@@ -52,11 +52,23 @@ public class RemoteControlWriter extends ExecutionDataWriter
 		out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
 	}
 
+	@Override
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
 		out.writeByte(RemoteControlWriter.BLOCK_CMDDUMP);
 		out.writeBoolean(dump);
 		out.writeBoolean(reset);
+	}
+
+	public void sendExtraInfo(String extraInfo) throws IOException {
+		if (extraInfo != null) {
+			out.writeByte(BLOCK_EXTRA_INFO);
+			out.writeUTF(extraInfo);
+		}
+	}
+
+	public void sendHeartbeat() throws IOException {
+		out.writeByte(BLOCK_HEARTBEAT);
 	}
 
 }

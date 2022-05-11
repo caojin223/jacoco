@@ -46,6 +46,12 @@ public class ExecutionDataWriter
 	/** Block identifier for execution data of a single class. */
 	public static final byte BLOCK_EXECUTIONDATA = 0x11;
 
+	/** Block identifier for 扩展的信息. */
+	public static final byte BLOCK_EXTRA_INFO = 0x12;
+
+	/** 心跳包 */
+	public static final byte BLOCK_HEARTBEAT = 0x13;
+
 	/** Underlying data output */
 	protected final CompactDataOutput out;
 

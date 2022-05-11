@@ -34,6 +34,9 @@ public class RuntimeData {
 
 	private String sessionId;
 
+	/** 扩展信息 */
+	private String extraInfo;
+
 	/**
 	 * Creates a new runtime.
 	 */
@@ -254,4 +257,11 @@ public class RuntimeData {
 		mv.visitTypeInsn(Opcodes.CHECKCAST, InstrSupport.DATAFIELD_DESC);
 	}
 
+	public String getExtraInfo() {
+		return extraInfo;
+	}
+
+	public void setExtraInfo(String extraInfo) {
+		this.extraInfo = extraInfo;
+	}
 }
