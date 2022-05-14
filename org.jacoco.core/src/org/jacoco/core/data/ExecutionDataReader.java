@@ -31,8 +31,6 @@ public class ExecutionDataReader {
 
 	private IExecutionDataVisitor executionDataVisitor = null;
 
-	private String extraInfo;
-
 	private boolean firstBlock = true;
 
 	/**
@@ -117,9 +115,6 @@ public class ExecutionDataReader {
 		case ExecutionDataWriter.BLOCK_EXECUTIONDATA:
 			readExecutionData();
 			return true;
-		case ExecutionDataWriter.BLOCK_EXTRA_INFO:
-			readExtraInfo();
-			return true;
 		default:
 			throw new IOException(
 					format("Unknown block type %x.", Byte.valueOf(blocktype)));
@@ -157,11 +152,4 @@ public class ExecutionDataReader {
 				.visitClassExecution(new ExecutionData(id, name, probes));
 	}
 
-	private void readExtraInfo() throws IOException {
-		this.extraInfo = in.readUTF();
-	}
-
-	public String getExtraInfo() {
-		return extraInfo;
-	}
 }

@@ -145,6 +145,13 @@ public final class AgentOptions {
 		tcpclient,
 
 		/**
+		 * Value for the {@link AgentOptions#OUTPUT} parameter: At startup the
+		 * agent connects to a TCP port specified by the
+		 * {@link AgentOptions#ADDRESS} and {@link AgentOptions#PORT} attribute.
+		 */
+		tcpcycle,
+
+		/**
 		 * Value for the {@link AgentOptions#OUTPUT} parameter: Do not produce
 		 * any output.
 		 */
@@ -189,10 +196,25 @@ public final class AgentOptions {
 	 */
 	public static final String JMX = "jmx";
 
+	/**
+	 * 项目名，用于项目识别
+	 */
+	public static final String SERVER = "server";
+
+	/**
+	 * 服务名，用于Module识别
+	 */
+	public static final String MODULE = "module";
+
+	/**
+	 * 服务名，用于项目识别
+	 */
+	public static final String COMMIT = "commit";
+
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
-			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX);
+			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVER, MODULE, COMMIT);
 
 	private final Map<String, String> options;
 
@@ -631,6 +653,18 @@ public final class AgentOptions {
 		}
 		args.add(0, getVMArgument(agentJarFile));
 		return CommandLineSupport.quote(args);
+	}
+
+	public String getServerName() {
+		return getOption(SERVER, null);
+	}
+
+	public String getModuleName() {
+		return getOption(MODULE, null);
+	}
+
+	public String getCommit() {
+		return getOption(COMMIT, null);
 	}
 
 	/**

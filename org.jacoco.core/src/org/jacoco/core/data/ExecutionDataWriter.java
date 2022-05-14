@@ -52,6 +52,15 @@ public class ExecutionDataWriter
 	/** 心跳包 */
 	public static final byte BLOCK_HEARTBEAT = 0x13;
 
+	/** 发送文件字节 */
+	public static final byte BLOCK_FILE = 0x14;
+
+	/** 发送项目信息，用于通知服务端存储class文件 */
+	public static final byte BLOCK_PROJECT_INFO = 0x15;
+
+	/** 服务端拉取classes */
+	public static final byte BLOCK_PULL_CLASSES = 0x16;
+
 	/** Underlying data output */
 	protected final CompactDataOutput out;
 

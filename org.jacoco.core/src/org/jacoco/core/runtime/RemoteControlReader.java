@@ -12,10 +12,15 @@
  *******************************************************************************/
 package org.jacoco.core.runtime;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import org.jacoco.core.data.ExecutionDataReader;
+import org.jacoco.core.data.ExecutionDataWriter;
 
 /**
  * {@link ExecutionDataReader} with commands added for runtime remote control.
@@ -23,6 +28,21 @@ import org.jacoco.core.data.ExecutionDataReader;
 public class RemoteControlReader extends ExecutionDataReader {
 
 	private IRemoteCommandVisitor remoteCommandVisitor;
+
+	/**
+	 * 添加消息发送的对象，用于回应服务端的请求
+	 */
+	private RemoteControlWriter writer;
+
+	private String extraInfo, server, module, commit, classDir;
+
+	public void setServer(String server, String module, String commit,
+			String classDir) {
+		this.server = server;
+		this.module = module;
+		this.commit = commit;
+		this.classDir = classDir;
+	}
 
 	/**
 	 * Create a new read based on the given input stream.
@@ -36,6 +56,10 @@ public class RemoteControlReader extends ExecutionDataReader {
 		super(input);
 	}
 
+	public void setRemoteWriter(RemoteControlWriter writer) {
+		this.writer = writer;
+	}
+
 	@Override
 	protected boolean readBlock(final byte blockid) throws IOException {
 		switch (blockid) {
@@ -44,6 +68,12 @@ public class RemoteControlReader extends ExecutionDataReader {
 			return true;
 		case RemoteControlWriter.BLOCK_CMDOK:
 			return false;
+		case ExecutionDataWriter.BLOCK_EXTRA_INFO:
+			readExtraInfo();
+			return true;
+		case ExecutionDataWriter.BLOCK_PULL_CLASSES:
+			remotePullClasses();
+			return true;
 		default:
 			return super.readBlock(blockid);
 		}
@@ -66,6 +96,62 @@ public class RemoteControlReader extends ExecutionDataReader {
 		final boolean dump = in.readBoolean();
 		final boolean reset = in.readBoolean();
 		remoteCommandVisitor.visitDumpCommand(dump, reset);
+	}
+
+	private void readExtraInfo() throws IOException {
+		this.extraInfo = in.readUTF();
+	}
+
+	public String getExtraInfo() {
+		return extraInfo;
+	}
+
+	private void remotePullClasses() throws IOException {
+		final String listStr = in.readUTF();
+		if (writer == null) {
+			return;
+		}
+		JSONArray json = JSONUtil.parseArray(listStr);
+		List<String> strList = json.toList(String.class);
+		Set<String> names = new HashSet<>(strList);
+		File folder = new File(classDir);
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+		sendClassFile(folder, names);
+	}
+
+	private void sendClassFile(File folder, Set<String> names)
+			throws IOException {
+		File[] files = folder.listFiles();
+		if (files == null) {
+			return;
+		}
+		for (File sub : files) {
+			if (sub.isDirectory()) {
+				sendClassFile(sub, names);
+			} else {
+				String name = sub.getName();
+				long length = sub.length();
+				if (length > 0 && !names.contains(name)) {
+					FileInputStream in = null;
+					try {
+						in = new FileInputStream(sub);
+						byte[] buffer = new byte[Long.valueOf(length)
+								.intValue()];
+						while (in.read(buffer) != -1) {
+							writer.sendClassFile(sub.getName(), buffer);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						if (in != null) {
+							in.close();
+						}
+					}
+				}
+			}
+		}
 	}
 
 }

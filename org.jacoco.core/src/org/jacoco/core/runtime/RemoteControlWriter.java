@@ -15,6 +15,7 @@ package org.jacoco.core.runtime;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import cn.hutool.json.JSONArray;
 import org.jacoco.core.data.ExecutionDataWriter;
 
 /**
@@ -49,26 +50,63 @@ public class RemoteControlWriter extends ExecutionDataWriter
 	 *             in case of problems with the remote connection
 	 */
 	public void sendCmdOk() throws IOException {
-		out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
+		synchronized (out) {
+			out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
+		}
 	}
 
 	@Override
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
-		out.writeByte(RemoteControlWriter.BLOCK_CMDDUMP);
-		out.writeBoolean(dump);
-		out.writeBoolean(reset);
+		synchronized (out) {
+			out.writeByte(RemoteControlWriter.BLOCK_CMDDUMP);
+			out.writeBoolean(dump);
+			out.writeBoolean(reset);
+		}
 	}
 
 	public void sendExtraInfo(String extraInfo) throws IOException {
-		if (extraInfo != null) {
-			out.writeByte(BLOCK_EXTRA_INFO);
-			out.writeUTF(extraInfo);
+		if (extraInfo != null && extraInfo.length() > 0) {
+			synchronized (out) {
+				out.writeByte(BLOCK_EXTRA_INFO);
+				out.writeUTF(extraInfo);
+			}
+		}
+	}
+
+	public void sendClassFile(String name, byte[] bytes) throws IOException {
+		if (bytes != null && bytes.length > 0) {
+			synchronized (out) {
+				out.writeByte(BLOCK_FILE);
+				out.writeUTF(name);
+				out.writeBytes(bytes);
+			}
 		}
 	}
 
 	public void sendHeartbeat() throws IOException {
-		out.writeByte(BLOCK_HEARTBEAT);
+		synchronized (out) {
+			out.writeByte(BLOCK_HEARTBEAT);
+		}
+	}
+
+	public void sendServerName(final String server, final String module,
+			final String commit) throws IOException {
+		synchronized (out) {
+			out.writeByte(BLOCK_PROJECT_INFO);
+			JSONArray json = new JSONArray() {
+				{
+					add(server);
+					if (module != null) {
+						add(module);
+					}
+					if (commit != null) {
+						add(commit);
+					}
+				}
+			};
+			out.writeUTF(json.toString());
+		}
 	}
 
 }

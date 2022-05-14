@@ -46,6 +46,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 		this.writer = new RemoteControlWriter(socket.getOutputStream());
 		this.reader = new RemoteControlReader(socket.getInputStream());
 		this.reader.setRemoteCommandVisitor(this);
+		this.reader.setRemoteWriter(this.writer);
 		this.initialized = true;
 	}
 
@@ -100,8 +101,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 	@Override
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
-		System.out.println(
-				"--------jacoco----------- Send dump -------------------");
+		System.out.println("-----jacoco----------> " + "Send dump");
 		if (dump) {
 			writer.sendExtraInfo(data.getExtraInfo());
 			data.collect(writer, writer, reset);
@@ -115,6 +115,16 @@ class TcpConnection implements IRemoteCommandVisitor {
 
 	public void sendHeartbeat() throws IOException {
 		writer.sendHeartbeat();
+	}
+
+	public void sendFile(String name, byte[] bytes) throws IOException {
+		writer.sendClassFile(name, bytes);
+	}
+
+	public void sendServerName(String server, String module, String commit,
+			String classDir) throws IOException {
+		reader.setServer(server, module, commit, classDir);
+		writer.sendServerName(server, module, commit);
 	}
 
 }

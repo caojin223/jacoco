@@ -16,21 +16,18 @@ package org.jacoco.core.runtime;
  * @author caoji 扩展的信息，如服务名、commit号，版本等，配合TcpClient使用
  */
 public class ExtraInfo {
-	private final String serverName;
-	private final String commit;
-	private final String version;
+	private final String server, module, commit;
 
-	public ExtraInfo(String serverName, String commit, String version) {
-		this.serverName = serverName;
+	public ExtraInfo(String server, String module, String commit) {
+		this.server = server;
+		this.module = module;
 		this.commit = commit;
-		this.version = version;
 	}
 
 	@Override
 	public String toString() {
-		String rst = String.format(
-				"{\"commit\":\"%s\",\"serverName\":\"%s\",\"version\":\"%s\"}",
-				commit, serverName, version);
-		return rst;
+		return String.format(
+				"{\"server\":\"%s\",\"module\":\"%s\",\"commit\":\"%s\"}",
+				server, module, commit);
 	}
 }

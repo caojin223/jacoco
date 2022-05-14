@@ -15,3 +15,7 @@ for questions regarding JaCoCo which are not already covered by the
 
 Note: We do not answer general questions in the project's issue tracker. Please use our [mailing list](https://groups.google.com/forum/?fromgroups=#!forum/jacoco) for this.
 -------------------------------------------------------------------------
+
+mvn spotless:apply
+"C:\Program Files\Java\jdk1.8.0_321\bin\java" -agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5005,suspend=y -javaagent:org.jacoco.agent/target/classes/jacocoagent.jar=includes=cn.devops.*,output=tcpclient,port=9999,address=localhost,append=true -jar org.jacoco.agent/target/product_management-3.0.jar
+"C:\Program Files\Java\jdk1.8.0_321\bin\java" -agentlib:jdwp=transport=dt_socket,server=n,address=localhost:5005,suspend=y -javaagent:org.jacoco.agent/target/org.jacoco.agent-0.8.9-SNAPSHOT.jar=includes=cn.devops.*,output=tcpclient,port=9999,address=localhost,append=true -jar org.jacoco.agent/target/product_management-3.0.jar
