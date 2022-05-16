@@ -15,7 +15,6 @@ package org.jacoco.core.runtime;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import cn.hutool.json.JSONArray;
 import org.jacoco.core.data.ExecutionDataWriter;
 
 /**
@@ -94,18 +93,15 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			final String commit) throws IOException {
 		synchronized (out) {
 			out.writeByte(BLOCK_PROJECT_INFO);
-			JSONArray json = new JSONArray() {
-				{
-					add(server);
-					if (module != null) {
-						add(module);
-					}
-					if (commit != null) {
-						add(commit);
-					}
-				}
-			};
-			out.writeUTF(json.toString());
+			StringBuilder sb = new StringBuilder();
+			sb.append(server);
+			if (module != null) {
+				sb.append("|").append(module);
+			}
+			if (commit != null) {
+				sb.append("|").append(commit);
+			}
+			out.writeUTF(sb.toString());
 		}
 	}
 

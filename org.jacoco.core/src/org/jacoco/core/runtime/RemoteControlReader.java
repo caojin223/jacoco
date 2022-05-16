@@ -13,12 +13,10 @@
 package org.jacoco.core.runtime;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONUtil;
 import org.jacoco.core.data.ExecutionDataReader;
 import org.jacoco.core.data.ExecutionDataWriter;
 
@@ -111,9 +109,8 @@ public class RemoteControlReader extends ExecutionDataReader {
 		if (writer == null) {
 			return;
 		}
-		JSONArray json = JSONUtil.parseArray(listStr);
-		List<String> strList = json.toList(String.class);
-		Set<String> names = new HashSet<>(strList);
+		String[] split = listStr.split("|");
+		Set names = new HashSet(Arrays.asList(split));
 		File folder = new File(classDir);
 		if (!folder.exists()) {
 			folder.mkdirs();
