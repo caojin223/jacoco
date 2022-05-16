@@ -205,7 +205,9 @@ public class TcpCycleOutput implements IAgentOutput {
 								heartbeat.wait(timeout);
 							}
 						}
-					} catch (InterruptedException | IOException e) {
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}

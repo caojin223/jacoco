@@ -98,10 +98,8 @@ class TcpConnection implements IRemoteCommandVisitor {
 
 	// === IRemoteCommandVisitor ===
 
-	@Override
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
-		System.out.println("-----jacoco----------> " + "Send dump");
 		if (dump) {
 			writer.sendExtraInfo(data.getExtraInfo());
 			data.collect(writer, writer, reset);
