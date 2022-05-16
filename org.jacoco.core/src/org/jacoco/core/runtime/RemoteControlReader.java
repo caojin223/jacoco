@@ -109,8 +109,8 @@ public class RemoteControlReader extends ExecutionDataReader {
 		if (writer == null) {
 			return;
 		}
-		String[] split = listStr.split("|");
-		Set names = new HashSet(Arrays.asList(split));
+		Set names = listStr.isEmpty() ? null
+				: new HashSet(Arrays.asList(listStr.split("\\|")));
 		File folder = new File(classDir);
 		if (!folder.exists()) {
 			folder.mkdirs();
@@ -118,8 +118,7 @@ public class RemoteControlReader extends ExecutionDataReader {
 		sendClassFile(folder, names);
 	}
 
-	private void sendClassFile(File folder, Set<String> names)
-			throws IOException {
+	private void sendClassFile(File folder, Set names) throws IOException {
 		File[] files = folder.listFiles();
 		if (files == null) {
 			return;
@@ -128,22 +127,21 @@ public class RemoteControlReader extends ExecutionDataReader {
 			if (sub.isDirectory()) {
 				sendClassFile(sub, names);
 			} else {
-				String name = sub.getName();
 				long length = sub.length();
-				if (length > 0 && !names.contains(name)) {
-					FileInputStream in = null;
-					try {
-						in = new FileInputStream(sub);
-						byte[] buffer = new byte[Long.valueOf(length)
-								.intValue()];
-						while (in.read(buffer) != -1) {
-							writer.sendClassFile(sub.getName(), buffer);
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					} finally {
-						if (in != null) {
-							in.close();
+				if (length > 0) {
+					if (names == null || !names.contains(sub.getName())) {
+						FileInputStream in = null;
+						try {
+							in = new FileInputStream(sub);
+							byte[] buffer = new byte[Long.valueOf(length)
+									.intValue()];
+							while (in.read(buffer) != -1) {
+								writer.sendClassFile(sub.getName(), buffer);
+							}
+						} finally {
+							if (in != null) {
+								in.close();
+							}
 						}
 					}
 				}

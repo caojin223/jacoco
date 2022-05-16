@@ -38,12 +38,13 @@ public class TcpClientOutputTest2 {
 	@Before
 	public void setup() throws Exception {
 		logger = new ExceptionRecorder();
-		socket = new Socket("127.0.0.1", 9999);
 		controller = new TcpCycleOutput(logger) {
 			@Override
 			protected Socket createSocket(AgentOptions options)
 					throws IOException {
-				return socket;
+				Socket newSocket = new Socket("127.0.0.1", 9999);
+				TcpClientOutputTest2.this.socket = newSocket;
+				return newSocket;
 			}
 		};
 		data = new RuntimeData();
@@ -51,7 +52,7 @@ public class TcpClientOutputTest2 {
 		controller.startup(new AgentOptions(arg), data);
 	}
 
-	// @Test
+	@Test
 	public void testAsyncWriteExecutionData() throws Exception {
 		ExecutionData foo = data.getExecutionData(Long.valueOf(0x12345678),
 				"Foo", 42);

@@ -17,11 +17,9 @@ import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.ExtraInfo;
 import org.jacoco.core.runtime.RuntimeData;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * @author caoji 通过TCP连接到服务端，定时或按需上报覆盖率数据
@@ -67,24 +65,34 @@ public class TcpCycleOutput implements IAgentOutput {
 			public void run() {
 				int i = 0;
 				while (running) {
-					setHeartbeatThread();
 					Socket socket = null;
 					try {
 						socket = createSocket(options);
+						heartbeat = new Thread(new Heartbeat(socket, TcpCycleOutput.this));
+						heartbeat.setName(getClass().getName() + "heartbeat");
+						heartbeat.setDaemon(true);
+						socket.setKeepAlive(true);
 						connection = new TcpConnection(socket, data);
 						data.setExtraInfo(new ExtraInfo(server, module, commit)
 								.toString());
 						connection.init();
 						connection.sendServerName(server, module, commit,
 								classDir);
+						setLastSend();
 						heartbeat.start();
+						i = 0;
 						connection.run();
 					} catch (final IOException e) {
-						logger.logExeption(e);
+						if (e instanceof SocketException) {
+							if ("Connection reset".equals(e.getMessage())) {
+								System.err.println("Connection reset");
+							}
+						}
 					} finally {
 						if (socket != null) {
 							try {
 								socket.close();
+								heartbeat.interrupt();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -180,41 +188,52 @@ public class TcpCycleOutput implements IAgentOutput {
 		this.commit = options.getCommit();
 	}
 
-	private void setHeartbeatThread() {
-		heartbeat = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (running) {
-					try {
-						long cost = System.currentTimeMillis() - last;
-						if (cost >= interval) {
-							System.out.println(printHeader
-									+ "cost > interval: sendHeartbeat");
-							connection.sendHeartbeat();
-							setLastSend();
-							synchronized (heartbeat) {
-								System.out.printf(printHeader + "sleep: %sms%n",
-										interval);
-								heartbeat.wait(interval);
-							}
-						} else {
-							long timeout = interval - cost;
-							System.out.println(printHeader
-									+ "cost <= interval sleep: " + timeout);
-							synchronized (heartbeat) {
-								heartbeat.wait(timeout);
-							}
+	static class Heartbeat implements Runnable{
+		private Socket socket;
+		private TcpCycleOutput cycle;
+
+		Heartbeat(Socket socket, TcpCycleOutput cycle){
+			this.socket = socket;
+			this.cycle = cycle;
+		}
+
+		@Override
+		public void run() {
+			try {
+				System.out.println("心跳包线程已启动...");
+				while (true) {
+					if (socket.isClosed()) {
+						System.out.println("心跳包线程已停止...");
+						return;
+					}
+					long cost = System.currentTimeMillis() - cycle.last;
+					if (cost >= cycle.interval) {
+						System.out.println(cycle.printHeader
+								+ "cost > interval: sendHeartbeat");
+						cycle.connection.sendHeartbeat();
+						this.cycle.setLastSend();
+						synchronized (this) {
+							System.out.printf(cycle.printHeader + "sleep: %sms%n",
+									cycle.interval);
+							wait(cycle.interval);
 						}
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
+					} else {
+						long timeout = cycle.interval - cost;
+						System.out.println(cycle.printHeader
+								+ "cost <= interval sleep: " + timeout);
+						synchronized (this) {
+							wait(timeout);
+						}
 					}
 				}
+			} catch (Exception e) {
+				if (e instanceof InterruptedException) {
+					System.out.println("InterruptedException: " + socket);
+				} else {
+					e.printStackTrace();
+				}
 			}
-		});
-		heartbeat.setName(getClass().getName() + "heartbeat");
-		heartbeat.setDaemon(true);
+		}
 	}
 
 }
