@@ -38,10 +38,14 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	private volatile boolean running = true;
 
-	/** 标记最后发送时间，用于发送心跳 */
+	/**
+	 * 标记最后发送时间，用于发送心跳
+	 */
 	private volatile long last = System.currentTimeMillis();
 
-	/** 心跳间隔 */
+	/**
+	 * 心跳间隔
+	 */
 	private int interval = 60 * 1000;
 
 	private String server, module, commit, classDir;
@@ -68,7 +72,11 @@ public class TcpCycleOutput implements IAgentOutput {
 					Socket socket = null;
 					try {
 						socket = createSocket(options);
-						heartbeat = new Thread(new Heartbeat(socket, TcpCycleOutput.this));
+						System.out.printf(printHeader + "%s已连接服务端%s%n",
+								socket.getLocalSocketAddress(),
+								socket.getRemoteSocketAddress());
+						heartbeat = new Thread(
+								new Heartbeat(socket, TcpCycleOutput.this));
 						heartbeat.setName(getClass().getName() + "heartbeat");
 						heartbeat.setDaemon(true);
 						socket.setKeepAlive(true);
@@ -85,7 +93,8 @@ public class TcpCycleOutput implements IAgentOutput {
 					} catch (final IOException e) {
 						if (e instanceof SocketException) {
 							if ("Connection reset".equals(e.getMessage())) {
-								System.err.println("Connection reset");
+								System.err.println(
+										printHeader + "Connection reset");
 							}
 						}
 					} finally {
@@ -186,13 +195,14 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 		this.module = options.getModuleName();
 		this.commit = options.getCommit();
+		this.interval = options.getHeartbeat();
 	}
 
-	static class Heartbeat implements Runnable{
-		private Socket socket;
-		private TcpCycleOutput cycle;
+	static class Heartbeat implements Runnable {
+		private final Socket socket;
+		private final TcpCycleOutput cycle;
 
-		Heartbeat(Socket socket, TcpCycleOutput cycle){
+		Heartbeat(Socket socket, TcpCycleOutput cycle) {
 			this.socket = socket;
 			this.cycle = cycle;
 		}
@@ -200,10 +210,11 @@ public class TcpCycleOutput implements IAgentOutput {
 		@Override
 		public void run() {
 			try {
-				System.out.println("心跳包线程已启动...");
+				System.out.printf(cycle.printHeader + "心跳已启动，间隔%sms.%n",
+						cycle.interval);
 				while (true) {
 					if (socket.isClosed()) {
-						System.out.println("心跳包线程已停止...");
+						System.out.println(cycle.printHeader + "心跳已停止...");
 						return;
 					}
 					long cost = System.currentTimeMillis() - cycle.last;
@@ -213,7 +224,8 @@ public class TcpCycleOutput implements IAgentOutput {
 						cycle.connection.sendHeartbeat();
 						this.cycle.setLastSend();
 						synchronized (this) {
-							System.out.printf(cycle.printHeader + "sleep: %sms%n",
+							System.out.printf(
+									cycle.printHeader + "sleep: %sms%n",
 									cycle.interval);
 							wait(cycle.interval);
 						}
@@ -228,7 +240,8 @@ public class TcpCycleOutput implements IAgentOutput {
 				}
 			} catch (Exception e) {
 				if (e instanceof InterruptedException) {
-					System.out.println("InterruptedException: " + socket);
+					System.out.println(cycle.printHeader
+							+ "InterruptedException: " + socket);
 				} else {
 					e.printStackTrace();
 				}

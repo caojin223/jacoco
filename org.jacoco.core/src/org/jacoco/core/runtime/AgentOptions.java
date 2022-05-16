@@ -211,10 +211,16 @@ public final class AgentOptions {
 	 */
 	public static final String COMMIT = "commit";
 
+	/**
+	 * 服务名，用于项目识别
+	 */
+	public static final String HEARTBEAT = "heartbeat";
+
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
-			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVER, MODULE, COMMIT);
+			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVER, MODULE, COMMIT,
+			HEARTBEAT);
 
 	private final Map<String, String> options;
 
@@ -665,6 +671,13 @@ public final class AgentOptions {
 
 	public String getCommit() {
 		return getOption(COMMIT, null);
+	}
+
+	/**
+	 * 默认2小时间隔心跳
+	 */
+	public int getHeartbeat() {
+		return getOption(HEARTBEAT, 2 * 60 * 1000);
 	}
 
 	/**
