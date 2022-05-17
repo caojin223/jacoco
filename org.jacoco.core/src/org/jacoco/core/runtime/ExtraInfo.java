@@ -26,8 +26,13 @@ public class ExtraInfo {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"{\"server\":\"%s\",\"module\":\"%s\",\"commit\":\"%s\"}",
-				server, module, commit);
+		StringBuilder sb = new StringBuilder(server);
+		if (module != null) {
+			sb.append("|").append(module);
+		}
+		if (commit != null) {
+			sb.append("|").append(commit);
+		}
+		return sb.toString();
 	}
 }

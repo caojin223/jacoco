@@ -46,7 +46,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	/**
 	 * 心跳间隔
 	 */
-	private int interval = 60 * 1000;
+	private int interval;
 
 	private String server, module, commit, classDir;
 
@@ -94,7 +94,7 @@ public class TcpCycleOutput implements IAgentOutput {
 						if (e instanceof SocketException) {
 							if ("Connection reset".equals(e.getMessage())) {
 								System.err.println(
-										printHeader + "Connection reset");
+										printHeader + "Socket disconnect");
 							}
 						}
 					} finally {
@@ -107,9 +107,8 @@ public class TcpCycleOutput implements IAgentOutput {
 							}
 						}
 					}
-					System.err.println(printHeader + "与服务端连接断开");
-					sleeper(5000
-							* (i < 100 ? 1 : (i < 500 ? 2 * i / 100 : 18)));
+					// System.err.println(printHeader + "与服务端连接断开");
+					sleeper(5000 * (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18)));
 					System.err.printf(printHeader + "尝试重连中......，第%d次\n", ++i);
 				}
 			}
@@ -209,40 +208,28 @@ public class TcpCycleOutput implements IAgentOutput {
 
 		@Override
 		public void run() {
+			int interval = cycle.interval * 1000;
 			try {
-				System.out.printf(cycle.printHeader + "心跳已启动，间隔%sms.%n",
+				System.out.printf(cycle.printHeader + "心跳间隔%ss.%n",
 						cycle.interval);
-				while (true) {
-					if (socket.isClosed()) {
-						System.out.println(cycle.printHeader + "心跳已停止...");
-						return;
-					}
+				while (!socket.isClosed()) {
 					long cost = System.currentTimeMillis() - cycle.last;
-					if (cost >= cycle.interval) {
-						System.out.println(cycle.printHeader
-								+ "cost > interval: sendHeartbeat");
+					if (cost >= interval) {
+						System.out.println("♥");
 						cycle.connection.sendHeartbeat();
-						this.cycle.setLastSend();
+						cycle.setLastSend();
 						synchronized (this) {
-							System.out.printf(
-									cycle.printHeader + "sleep: %sms%n",
-									cycle.interval);
-							wait(cycle.interval);
+							wait(interval);
 						}
 					} else {
-						long timeout = cycle.interval - cost;
-						System.out.println(cycle.printHeader
-								+ "cost <= interval sleep: " + timeout);
+						long timeout = interval - cost;
 						synchronized (this) {
 							wait(timeout);
 						}
 					}
 				}
 			} catch (Exception e) {
-				if (e instanceof InterruptedException) {
-					System.out.println(cycle.printHeader
-							+ "InterruptedException: " + socket);
-				} else {
+				if (!(e instanceof InterruptedException)) {
 					e.printStackTrace();
 				}
 			}

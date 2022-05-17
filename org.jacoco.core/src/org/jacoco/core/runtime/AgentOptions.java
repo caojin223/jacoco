@@ -674,10 +674,10 @@ public final class AgentOptions {
 	}
 
 	/**
-	 * 默认2小时间隔心跳
+	 * 默认10分钟间隔心跳
 	 */
 	public int getHeartbeat() {
-		return getOption(HEARTBEAT, 2 * 60 * 1000);
+		return getOption(HEARTBEAT, 10 * 60 * 60);
 	}
 
 	/**

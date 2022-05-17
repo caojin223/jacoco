@@ -52,7 +52,7 @@ public class TcpClientOutputTest2 {
 		controller.startup(new AgentOptions(arg), data);
 	}
 
-	@Test
+	// @Test
 	public void testAsyncWriteExecutionData() throws Exception {
 		ExecutionData foo = data.getExecutionData(Long.valueOf(0x12345678),
 				"Foo", 42);
