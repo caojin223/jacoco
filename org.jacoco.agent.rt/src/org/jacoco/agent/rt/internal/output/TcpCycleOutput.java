@@ -48,7 +48,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	 */
 	private int interval;
 
-	private String server, module, commit, classDir;
+	private String server, module, commit, classDir, gitUrl;
 
 	/**
 	 * New controller instance.
@@ -86,8 +86,8 @@ public class TcpCycleOutput implements IAgentOutput {
 								.toString());
 						connection.init();
 						// 用于通知服务端初始化项目信息，如拉取代码等
-						connection.sendServerName(server, module, commit,
-								classDir);
+						connection.sendProjectInfo(server, module, commit,
+								classDir, gitUrl);
 						setLastSend();
 						heartbeat.start();
 						i = 0;
@@ -193,6 +193,10 @@ public class TcpCycleOutput implements IAgentOutput {
 		this.classDir = options.getClassDumpDir();
 		if (this.classDir == null || this.classDir.isEmpty()) {
 			throw new IllegalArgumentException("classdumpdir is required.");
+		}
+		this.gitUrl = options.getGitUrl();
+		if (this.gitUrl == null || this.gitUrl.isEmpty()) {
+			throw new IllegalArgumentException("giturl is required.");
 		}
 		this.module = options.getModuleName();
 		this.commit = options.getCommit();

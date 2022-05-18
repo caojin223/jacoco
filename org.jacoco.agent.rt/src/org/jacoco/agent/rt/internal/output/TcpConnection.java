@@ -119,10 +119,10 @@ class TcpConnection implements IRemoteCommandVisitor {
 		writer.sendClassFile(name, bytes);
 	}
 
-	public void sendServerName(String server, String module, String commit,
-			String classDir) throws IOException {
+	public void sendProjectInfo(String server, String module, String commit,
+			String classDir, String gitUrl) throws IOException {
 		reader.setServer(classDir);
-		writer.sendServerName(server, module, commit);
+		writer.sendProjectInfo(server, module, commit, gitUrl);
 	}
 
 }

@@ -89,8 +89,8 @@ public class RemoteControlWriter extends ExecutionDataWriter
 		}
 	}
 
-	public void sendServerName(final String server, final String module,
-			final String commit) throws IOException {
+	public void sendProjectInfo(final String server, final String module,
+			final String commit, final String gitUrl) throws IOException {
 		synchronized (out) {
 			out.writeByte(BLOCK_PROJECT_INFO);
 			StringBuilder sb = new StringBuilder();
@@ -100,6 +100,9 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			}
 			if (commit != null) {
 				sb.append("|").append(commit);
+			}
+			if (gitUrl != null) {
+				sb.append("|").append(gitUrl);
 			}
 			out.writeUTF(sb.toString());
 		}

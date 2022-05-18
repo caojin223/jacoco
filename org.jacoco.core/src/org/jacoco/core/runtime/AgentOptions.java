@@ -216,11 +216,16 @@ public final class AgentOptions {
 	 */
 	public static final String HEARTBEAT = "heartbeat";
 
+	/**
+	 * 项目Gitlab地址，用于通知服务端拉取代码
+	 */
+	public static final String GITURL = "giturl";
+
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
 			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVER, MODULE, COMMIT,
-			HEARTBEAT);
+			HEARTBEAT, GITURL);
 
 	private final Map<String, String> options;
 
@@ -678,6 +683,13 @@ public final class AgentOptions {
 	 */
 	public int getHeartbeat() {
 		return getOption(HEARTBEAT, 10 * 60 * 60);
+	}
+
+	/**
+	 * 获取项目的Gitlab地址
+	 */
+	public String getGitUrl() {
+		return getOption(GITURL, "");
 	}
 
 	/**
