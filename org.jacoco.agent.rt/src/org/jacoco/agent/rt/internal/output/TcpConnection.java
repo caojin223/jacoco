@@ -121,7 +121,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 
 	public void sendServerName(String server, String module, String commit,
 			String classDir) throws IOException {
-		reader.setServer(server, module, commit, classDir);
+		reader.setServer(classDir);
 		writer.sendServerName(server, module, commit);
 	}
 

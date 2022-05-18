@@ -32,13 +32,9 @@ public class RemoteControlReader extends ExecutionDataReader {
 	 */
 	private RemoteControlWriter writer;
 
-	private String extraInfo, server, module, commit, classDir;
+	private String extraInfo, classDir;
 
-	public void setServer(String server, String module, String commit,
-			String classDir) {
-		this.server = server;
-		this.module = module;
-		this.commit = commit;
+	public void setServer(String classDir) {
 		this.classDir = classDir;
 	}
 
@@ -109,34 +105,36 @@ public class RemoteControlReader extends ExecutionDataReader {
 		if (writer == null) {
 			return;
 		}
-		Set names = listStr.isEmpty() ? null
+		Set classIds = listStr.isEmpty() ? null
 				: new HashSet(Arrays.asList(listStr.split("\\|")));
 		File folder = new File(classDir);
 		if (!folder.exists()) {
 			folder.mkdirs();
 		}
-		sendClassFile(folder, names);
+		sendClassFile(folder, classIds);
 	}
 
-	private void sendClassFile(File folder, Set names) throws IOException {
+	private void sendClassFile(File folder, Set classIds) throws IOException {
 		File[] files = folder.listFiles();
 		if (files == null) {
 			return;
 		}
 		for (File sub : files) {
 			if (sub.isDirectory()) {
-				sendClassFile(sub, names);
+				sendClassFile(sub, classIds);
 			} else {
 				long length = sub.length();
 				if (length > 0) {
-					if (names == null || !names.contains(sub.getName())) {
+					String subName = sub.getName();
+					String classId = getClassIdByName(subName);
+					if (classIds == null || !classIds.contains(classId)) {
 						FileInputStream in = null;
 						try {
 							in = new FileInputStream(sub);
 							byte[] buffer = new byte[Long.valueOf(length)
 									.intValue()];
 							while (in.read(buffer) != -1) {
-								writer.sendClassFile(sub.getName(), buffer);
+								writer.sendClassFile(subName, buffer);
 							}
 						} finally {
 							if (in != null) {
@@ -147,6 +145,15 @@ public class RemoteControlReader extends ExecutionDataReader {
 				}
 			}
 		}
+	}
+
+	private String getClassIdByName(String name) {
+		String[] split = name.split("\\.");
+		String rst = "";
+		if (split.length > 2) {
+			rst = split[split.length - 2];
+		}
+		return rst;
 	}
 
 }

@@ -81,9 +81,11 @@ public class TcpCycleOutput implements IAgentOutput {
 						heartbeat.setDaemon(true);
 						socket.setKeepAlive(true);
 						connection = new TcpConnection(socket, data);
+						// 用于在发送dump时进行分类
 						data.setExtraInfo(new ExtraInfo(server, module, commit)
 								.toString());
 						connection.init();
+						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendServerName(server, module, commit,
 								classDir);
 						setLastSend();
