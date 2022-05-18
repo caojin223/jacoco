@@ -14,7 +14,6 @@ package org.jacoco.agent.rt.internal.output;
 
 import org.jacoco.agent.rt.internal.IExceptionLogger;
 import org.jacoco.core.runtime.AgentOptions;
-import org.jacoco.core.runtime.ExtraInfo;
 import org.jacoco.core.runtime.RuntimeData;
 
 import java.io.*;
@@ -81,9 +80,6 @@ public class TcpCycleOutput implements IAgentOutput {
 						heartbeat.setDaemon(true);
 						socket.setKeepAlive(true);
 						connection = new TcpConnection(socket, data);
-						// 用于在发送dump时进行分类
-						data.setExtraInfo(new ExtraInfo(server, module, commit)
-								.toString());
 						connection.init();
 						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendProjectInfo(server, module, commit,
@@ -155,34 +151,6 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	private void setLastSend() {
 		last = System.currentTimeMillis();
-	}
-
-	public void sendFile(File file) throws IOException {
-		File[] files = file.listFiles();
-		if (files == null || files.length == 0) {
-			return;
-		}
-		for (File sub : files) {
-			if (sub.isDirectory()) {
-				sendFile(sub);
-			} else if (sub.length() > 0) {
-				FileInputStream in = null;
-				try {
-					in = new FileInputStream(sub);
-					int length = Long.valueOf(sub.length()).intValue();
-					byte[] buffer = new byte[length];
-					while (in.read(buffer) != -1) {
-						connection.sendFile(sub.getName(), buffer);
-					}
-				} catch (FileNotFoundException e) {
-					return;
-				} finally {
-					if (in != null) {
-						in.close();
-					}
-				}
-			}
-		}
 	}
 
 	private void checkArgs(final AgentOptions options) {

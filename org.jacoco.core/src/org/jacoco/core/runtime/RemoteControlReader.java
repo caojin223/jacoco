@@ -32,7 +32,7 @@ public class RemoteControlReader extends ExecutionDataReader {
 	 */
 	private RemoteControlWriter writer;
 
-	private String extraInfo, classDir;
+	private String classDir;
 
 	public void setServer(String classDir) {
 		this.classDir = classDir;
@@ -62,9 +62,6 @@ public class RemoteControlReader extends ExecutionDataReader {
 			return true;
 		case RemoteControlWriter.BLOCK_CMDOK:
 			return false;
-		case ExecutionDataWriter.BLOCK_EXTRA_INFO:
-			readExtraInfo();
-			return true;
 		case ExecutionDataWriter.BLOCK_PULL_CLASSES:
 			remotePullClasses();
 			return true;
@@ -90,14 +87,6 @@ public class RemoteControlReader extends ExecutionDataReader {
 		final boolean dump = in.readBoolean();
 		final boolean reset = in.readBoolean();
 		remoteCommandVisitor.visitDumpCommand(dump, reset);
-	}
-
-	private void readExtraInfo() throws IOException {
-		this.extraInfo = in.readUTF();
-	}
-
-	public String getExtraInfo() {
-		return extraInfo;
 	}
 
 	private void remotePullClasses() throws IOException {

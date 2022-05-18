@@ -101,7 +101,6 @@ class TcpConnection implements IRemoteCommandVisitor {
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
 		if (dump) {
-			writer.sendExtraInfo(data.getExtraInfo());
 			data.collect(writer, writer, reset);
 		} else {
 			if (reset) {
@@ -113,10 +112,6 @@ class TcpConnection implements IRemoteCommandVisitor {
 
 	public void sendHeartbeat() throws IOException {
 		writer.sendHeartbeat();
-	}
-
-	public void sendFile(String name, byte[] bytes) throws IOException {
-		writer.sendClassFile(name, bytes);
 	}
 
 	public void sendProjectInfo(String server, String module, String commit,
