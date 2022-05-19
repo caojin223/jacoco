@@ -106,8 +106,12 @@ public class TcpCycleOutput implements IAgentOutput {
 						}
 					}
 					// System.err.println(printHeader + "与服务端连接断开");
-					sleeper(5000 * (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18)));
-					System.err.printf(printHeader + "尝试重连中......，第%d次\n", ++i);
+					sleeper(10 * 1000
+							* (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18)));
+					if (running) {
+						System.err.printf(printHeader + "尝试重连中......，第%d次\n",
+								++i);
+					}
 				}
 			}
 		});
@@ -160,7 +164,8 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 		this.classDir = options.getClassDumpDir();
 		if (this.classDir == null || this.classDir.isEmpty()) {
-			throw new IllegalArgumentException("classdumpdir is required.");
+			options.setClassDumpDir("classes");
+			this.classDir = options.getClassDumpDir();
 		}
 		this.gitUrl = options.getGitUrl();
 		if (this.gitUrl == null || this.gitUrl.isEmpty()) {
