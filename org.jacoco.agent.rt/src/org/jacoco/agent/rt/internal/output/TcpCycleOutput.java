@@ -83,8 +83,8 @@ public class TcpCycleOutput implements IAgentOutput {
 						heartbeatThread.setDaemon(true);
 						socket.setKeepAlive(true);
 						connection = new TcpConnection(socket, data);
-						connection.setHeartbeat(heartbeat);
 						connection.init();
+						connection.setHeartbeat(heartbeat);
 						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendProjectInfo(project, service, branch,
 								commit, classDir, gitUrl);
@@ -184,6 +184,7 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 		if (value == null) {
 			options.getOptions().put(key, defaultValue);
+			value = defaultValue;
 		}
 		return value;
 	}

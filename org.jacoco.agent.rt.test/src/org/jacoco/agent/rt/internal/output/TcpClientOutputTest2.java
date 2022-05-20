@@ -48,7 +48,8 @@ public class TcpClientOutputTest2 {
 			}
 		};
 		data = new RuntimeData();
-		String arg = "server=jk,module=dms,commit=12345,"
+		String arg = "project=jk,service=dms,branch=release,commit=123456,"
+				+ "classdumpdir=target/jk/classes,"
 				+ "giturl=https://github.com/bydzjmx/EasyChat-Netty";
 		controller.startup(new AgentOptions(arg), data);
 	}

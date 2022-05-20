@@ -88,7 +88,6 @@ public class ExecutionDataWriter
 	public ExecutionDataWriter(final OutputStream output) throws IOException {
 		this.out = new CompactDataOutput(output);
 		writeHeader();
-		flushHeartbeat();
 	}
 
 	/**
