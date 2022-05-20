@@ -52,6 +52,7 @@ public class RemoteControlWriter extends ExecutionDataWriter
 		synchronized (out) {
 			out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
 		}
+		flushHeartbeat();
 	}
 
 	public void visitDumpCommand(final boolean dump, final boolean reset)
@@ -61,6 +62,7 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			out.writeBoolean(dump);
 			out.writeBoolean(reset);
 		}
+		flushHeartbeat();
 	}
 
 	public void sendClassFile(String name, byte[] bytes) throws IOException {
@@ -70,6 +72,7 @@ public class RemoteControlWriter extends ExecutionDataWriter
 				out.writeUTF(name);
 				out.writeBytes(bytes);
 			}
+			flushHeartbeat();
 		}
 	}
 
@@ -77,16 +80,20 @@ public class RemoteControlWriter extends ExecutionDataWriter
 		synchronized (out) {
 			out.writeByte(BLOCK_HEARTBEAT);
 		}
+		flushHeartbeat();
 	}
 
-	public void sendProjectInfo(final String server, final String module,
-			final String commit, final String gitUrl) throws IOException {
+	public void sendProjectInfo(String project, String service, String branch,
+			String commit, String gitUrl) throws IOException {
 		synchronized (out) {
 			out.writeByte(BLOCK_PROJECT_INFO);
 			StringBuilder sb = new StringBuilder();
-			sb.append(server);
-			if (module != null) {
-				sb.append("|").append(module);
+			sb.append(project);
+			if (service != null) {
+				sb.append("|").append(service);
+			}
+			if (branch != null) {
+				sb.append("|").append(branch);
 			}
 			if (commit != null) {
 				sb.append("|").append(commit);
@@ -96,6 +103,7 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			}
 			out.writeUTF(sb.toString());
 		}
+		flushHeartbeat();
 	}
 
 }

@@ -199,20 +199,25 @@ public final class AgentOptions {
 	/**
 	 * 项目名，用于项目识别
 	 */
-	public static final String SERVER = "server";
+	public static final String PROJECT = "project";
 
 	/**
 	 * 服务名，用于Module识别
 	 */
-	public static final String MODULE = "module";
+	public static final String SERVICE = "service";
 
 	/**
-	 * 服务名，用于项目识别
+	 * 分支名，用于分类管理class和source等文件
+	 */
+	public static final String BRANCH = "branch";
+
+	/**
+	 * 提交hash，用于分类管理class和source等文件
 	 */
 	public static final String COMMIT = "commit";
 
 	/**
-	 * 服务名，用于项目识别
+	 * 心跳间隔，单位为秒
 	 */
 	public static final String HEARTBEAT = "heartbeat";
 
@@ -224,8 +229,8 @@ public final class AgentOptions {
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
-			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVER, MODULE, COMMIT,
-			HEARTBEAT, GITURL);
+			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, PROJECT, SERVICE, BRANCH,
+			COMMIT, HEARTBEAT, GITURL);
 
 	private final Map<String, String> options;
 
@@ -666,12 +671,16 @@ public final class AgentOptions {
 		return CommandLineSupport.quote(args);
 	}
 
-	public String getServerName() {
-		return getOption(SERVER, null);
+	public String getProject() {
+		return getOption(PROJECT, null);
 	}
 
-	public String getModuleName() {
-		return getOption(MODULE, null);
+	public String getSERVICE() {
+		return getOption(SERVICE, null);
+	}
+
+	public String getBranch() {
+		return getOption(BRANCH, null);
 	}
 
 	public String getCommit() {
@@ -679,10 +688,10 @@ public final class AgentOptions {
 	}
 
 	/**
-	 * 默认10分钟间隔心跳
+	 * 默认200分钟间隔心跳
 	 */
 	public int getHeartbeat() {
-		return getOption(HEARTBEAT, 10 * 60 * 60);
+		return getOption(HEARTBEAT, 200 * 60 * 60);
 	}
 
 	/**
@@ -711,4 +720,7 @@ public final class AgentOptions {
 		return sb.toString();
 	}
 
+	public Map<String, String> getOptions() {
+		return options;
+	}
 }

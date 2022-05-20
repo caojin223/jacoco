@@ -15,6 +15,7 @@ package org.jacoco.core.data;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jacoco.core.internal.data.CompactDataOutput;
 
@@ -61,6 +62,19 @@ public class ExecutionDataWriter
 	/** Underlying data output */
 	protected final CompactDataOutput out;
 
+	/** 记录最后发送Socket时间，用于心跳判断 */
+	public AtomicLong heartbeat;
+
+	public void setHeartbeat(AtomicLong heartbeat) {
+		this.heartbeat = heartbeat;
+	}
+
+	protected void flushHeartbeat() {
+		if (heartbeat != null) {
+			heartbeat.set(System.currentTimeMillis());
+		}
+	}
+
 	/**
 	 * Creates a new writer based on the given output stream. Depending on the
 	 * nature of the underlying stream output should be buffered as most data is
@@ -74,6 +88,7 @@ public class ExecutionDataWriter
 	public ExecutionDataWriter(final OutputStream output) throws IOException {
 		this.out = new CompactDataOutput(output);
 		writeHeader();
+		flushHeartbeat();
 	}
 
 	/**
@@ -100,10 +115,13 @@ public class ExecutionDataWriter
 
 	public void visitSessionInfo(final SessionInfo info) {
 		try {
-			out.writeByte(BLOCK_SESSIONINFO);
-			out.writeUTF(info.getId());
-			out.writeLong(info.getStartTimeStamp());
-			out.writeLong(info.getDumpTimeStamp());
+			synchronized (out) {
+				out.writeByte(BLOCK_SESSIONINFO);
+				out.writeUTF(info.getId());
+				out.writeLong(info.getStartTimeStamp());
+				out.writeLong(info.getDumpTimeStamp());
+			}
+			flushHeartbeat();
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -112,10 +130,13 @@ public class ExecutionDataWriter
 	public void visitClassExecution(final ExecutionData data) {
 		if (data.hasHits()) {
 			try {
-				out.writeByte(BLOCK_EXECUTIONDATA);
-				out.writeLong(data.getId());
-				out.writeUTF(data.getName());
-				out.writeBooleanArray(data.getProbes());
+				synchronized (out) {
+					out.writeByte(BLOCK_EXECUTIONDATA);
+					out.writeLong(data.getId());
+					out.writeUTF(data.getName());
+					out.writeBooleanArray(data.getProbes());
+				}
+				flushHeartbeat();
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
 			}

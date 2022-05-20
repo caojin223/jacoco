@@ -44,7 +44,7 @@ public final class PreMain {
 	 */
 	public static void premain(final String options, final Instrumentation inst)
 			throws Exception {
-
+		System.out.println("-----jacoco----------> startup: " + options);
 		final AgentOptions agentOptions = new AgentOptions(options);
 
 		final Agent agent = Agent.getInstance(agentOptions);

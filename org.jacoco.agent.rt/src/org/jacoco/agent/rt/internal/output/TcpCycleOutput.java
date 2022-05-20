@@ -19,6 +19,7 @@ import org.jacoco.core.runtime.RuntimeData;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author caoji 通过TCP连接到服务端，定时或按需上报覆盖率数据
@@ -31,7 +32,7 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	private Thread worker;
 
-	private Thread heartbeat;
+	private Thread heartbeatThread;
 
 	private final String printHeader = "-----jacoco----------> ";
 
@@ -40,14 +41,15 @@ public class TcpCycleOutput implements IAgentOutput {
 	/**
 	 * 标记最后发送时间，用于发送心跳
 	 */
-	private volatile long last = System.currentTimeMillis();
+	private final AtomicLong heartbeat = new AtomicLong(
+			System.currentTimeMillis());
 
 	/**
 	 * 心跳间隔
 	 */
 	private int interval;
 
-	private String server, module, commit, classDir, gitUrl;
+	private String project, service, branch, commit, classDir, gitUrl;
 
 	/**
 	 * New controller instance.
@@ -74,18 +76,19 @@ public class TcpCycleOutput implements IAgentOutput {
 						System.out.printf(printHeader + "%s已连接服务端%s%n",
 								socket.getLocalSocketAddress(),
 								socket.getRemoteSocketAddress());
-						heartbeat = new Thread(
+						heartbeatThread = new Thread(
 								new Heartbeat(socket, TcpCycleOutput.this));
-						heartbeat.setName(getClass().getName() + "heartbeat");
-						heartbeat.setDaemon(true);
+						heartbeatThread
+								.setName(getClass().getName() + "_heartbeat");
+						heartbeatThread.setDaemon(true);
 						socket.setKeepAlive(true);
 						connection = new TcpConnection(socket, data);
+						connection.setHeartbeat(heartbeat);
 						connection.init();
 						// 用于通知服务端初始化项目信息，如拉取代码等
-						connection.sendProjectInfo(server, module, commit,
-								classDir, gitUrl);
-						setLastSend();
-						heartbeat.start();
+						connection.sendProjectInfo(project, service, branch,
+								commit, classDir, gitUrl);
+						heartbeatThread.start();
 						i = 0;
 						connection.run();
 					} catch (final IOException e) {
@@ -99,7 +102,7 @@ public class TcpCycleOutput implements IAgentOutput {
 						if (socket != null) {
 							try {
 								socket.close();
-								heartbeat.interrupt();
+								heartbeatThread.interrupt();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -128,7 +131,6 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	public void writeExecutionData(final boolean reset) throws IOException {
 		connection.writeExecutionData(reset);
-		setLastSend();
 	}
 
 	/**
@@ -153,27 +155,37 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 	}
 
-	private void setLastSend() {
-		last = System.currentTimeMillis();
+	private void checkArgs(final AgentOptions options) {
+		project = assertGetEnv(AgentOptions.PROJECT, options);
+		classDir = getArg(AgentOptions.CLASSDUMPDIR, options, "classes");
+		gitUrl = assertGetEnv(AgentOptions.GITURL, options);
+		service = assertGetEnv(AgentOptions.SERVICE, options);
+		branch = assertGetEnv(AgentOptions.BRANCH, options);
+		commit = assertGetEnv(AgentOptions.COMMIT, options);
+		interval = options.getHeartbeat();
 	}
 
-	private void checkArgs(final AgentOptions options) {
-		this.server = options.getServerName();
-		if (this.server == null || this.server.isEmpty()) {
-			throw new IllegalArgumentException("server arg is required.");
+	private String assertGetEnv(String key, AgentOptions options) {
+		String value = options.getOptions().get(key);
+		if (value == null) {
+			value = System.getenv().get(key);
 		}
-		this.classDir = options.getClassDumpDir();
-		if (this.classDir == null || this.classDir.isEmpty()) {
-			options.setClassDumpDir("classes");
-			this.classDir = options.getClassDumpDir();
+		if (value == null) {
+			throw new IllegalArgumentException(key + " arg is required.");
 		}
-		this.gitUrl = options.getGitUrl();
-		if (this.gitUrl == null || this.gitUrl.isEmpty()) {
-			throw new IllegalArgumentException("giturl is required.");
+		return value;
+	}
+
+	private String getArg(String key, AgentOptions options,
+			String defaultValue) {
+		String value = options.getOptions().get(key);
+		if (value == null) {
+			value = System.getenv().get(key);
 		}
-		this.module = options.getModuleName();
-		this.commit = options.getCommit();
-		this.interval = options.getHeartbeat();
+		if (value == null) {
+			options.getOptions().put(key, defaultValue);
+		}
+		return value;
 	}
 
 	static class Heartbeat implements Runnable {
@@ -191,22 +203,23 @@ public class TcpCycleOutput implements IAgentOutput {
 			try {
 				System.out.printf(cycle.printHeader + "心跳间隔%ss.%n",
 						cycle.interval);
-				while (!socket.isClosed()) {
-					long cost = System.currentTimeMillis() - cycle.last;
+				while (socket.isConnected()) {
+					long cost = System.currentTimeMillis()
+							- cycle.heartbeat.get();
 					if (cost >= interval) {
 						System.out.println("♥");
 						cycle.connection.sendHeartbeat();
-						cycle.setLastSend();
 						synchronized (this) {
 							wait(interval);
 						}
 					} else {
-						long timeout = interval - cost;
+						long remaining = interval - cost;
 						synchronized (this) {
-							wait(timeout);
+							wait(remaining);
 						}
 					}
 				}
+				System.out.println(cycle.printHeader + "心跳停止%n");
 			} catch (Exception e) {
 				if (!(e instanceof InterruptedException)) {
 					e.printStackTrace();

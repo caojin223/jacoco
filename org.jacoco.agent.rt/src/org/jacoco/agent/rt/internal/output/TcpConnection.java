@@ -15,6 +15,7 @@ package org.jacoco.agent.rt.internal.output;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.jacoco.core.runtime.IRemoteCommandVisitor;
 import org.jacoco.core.runtime.RemoteControlReader;
@@ -114,10 +115,14 @@ class TcpConnection implements IRemoteCommandVisitor {
 		writer.sendHeartbeat();
 	}
 
-	public void sendProjectInfo(String server, String module, String commit,
-			String classDir, String gitUrl) throws IOException {
+	public void sendProjectInfo(String project, String service, String branch,
+			String commit, String classDir, String gitUrl) throws IOException {
 		reader.setServer(classDir);
-		writer.sendProjectInfo(server, module, commit, gitUrl);
+		writer.sendProjectInfo(project, service, branch, commit, gitUrl);
+	}
+
+	public void setHeartbeat(AtomicLong heartbeat) {
+		this.writer.setHeartbeat(heartbeat);
 	}
 
 }
