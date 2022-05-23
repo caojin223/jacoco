@@ -42,14 +42,15 @@ public class TcpClientOutputTest2 {
 			@Override
 			protected Socket createSocket(AgentOptions options)
 					throws IOException {
-				Socket newSocket = new Socket("127.0.0.1", 9999);
+				Socket newSocket = new Socket(options.getAddress(),
+						options.getPort());
 				TcpClientOutputTest2.this.socket = newSocket;
 				return newSocket;
 			}
 		};
 		data = new RuntimeData();
 		String arg = "project=jk,service=dms,branch=release,commit=123456,"
-				+ "classdumpdir=target/jk/classes,"
+				+ "classdumpdir=target/jk/classes,address=localhost,"
 				+ "giturl=https://github.com/bydzjmx/EasyChat-Netty";
 		controller.startup(new AgentOptions(arg), data);
 	}
