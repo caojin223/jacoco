@@ -83,12 +83,15 @@ public class RemoteControlWriter extends ExecutionDataWriter
 		flushHeartbeat();
 	}
 
-	public void sendProjectInfo(String project, String service, String branch,
-			String commit, String gitUrl) throws IOException {
+	public void sendProjectInfo(String product, String project, String service,
+			String branch, String commit, String gitUrl) throws IOException {
 		synchronized (out) {
 			out.writeByte(BLOCK_PROJECT_INFO);
 			StringBuilder sb = new StringBuilder();
-			sb.append(project);
+			sb.append(product);
+			if (project != null) {
+				sb.append("|").append(project);
+			}
 			if (service != null) {
 				sb.append("|").append(service);
 			}

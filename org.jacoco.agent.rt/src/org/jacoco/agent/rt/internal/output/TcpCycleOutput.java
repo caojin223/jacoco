@@ -49,7 +49,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	 */
 	private int interval;
 
-	private String project, service, branch, commit, classDir, gitUrl;
+	private String product, project, service, branch, commit, classDir, gitUrl;
 
 	/**
 	 * New controller instance.
@@ -86,8 +86,8 @@ public class TcpCycleOutput implements IAgentOutput {
 						connection.init();
 						connection.setHeartbeat(heartbeat);
 						// 用于通知服务端初始化项目信息，如拉取代码等
-						connection.sendProjectInfo(project, service, branch,
-								commit, classDir, gitUrl);
+						connection.sendProjectInfo(product, project, service,
+								branch, commit, classDir, gitUrl);
 						heartbeatThread.start();
 						i = 0;
 						connection.run();
@@ -157,13 +157,17 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	private void checkArgs(final AgentOptions options) {
 		assertGetEnv(AgentOptions.ADDRESS, options);
-		project = assertGetEnv(AgentOptions.PROJECT, options);
 		classDir = getArg(AgentOptions.CLASSDUMPDIR, options, "classes");
-		gitUrl = assertGetEnv(AgentOptions.GITURL, options);
-		service = assertGetEnv(AgentOptions.SERVICE, options);
 		branch = assertGetEnv(AgentOptions.BRANCH, options);
 		commit = assertGetEnv(AgentOptions.COMMIT, options);
 		interval = options.getHeartbeat();
+
+		gitUrl = assertGetEnv(AgentOptions.GITURL, options);
+		if (!gitUrl.toLowerCase().endsWith(".git")) {
+			gitUrl += ".git";
+		}
+		analyzeGitUrl(gitUrl);
+		service = assertGetEnv(AgentOptions.SERVICE, options);
 	}
 
 	private String assertGetEnv(String key, AgentOptions options) {
@@ -188,6 +192,16 @@ public class TcpCycleOutput implements IAgentOutput {
 			value = defaultValue;
 		}
 		return value;
+	}
+
+	private void analyzeGitUrl(String gitUrl) {
+		String[] split = gitUrl.split("/");
+		if (split.length < 5) {
+			throw new IllegalArgumentException("Invalid git url: " + gitUrl);
+		}
+		product = split[split.length - 2];
+		String project = split[split.length - 1];
+		this.project = project.substring(0, project.length() - 4);
 	}
 
 	static class Heartbeat implements Runnable {

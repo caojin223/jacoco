@@ -196,10 +196,10 @@ public final class AgentOptions {
 	 */
 	public static final String JMX = "jmx";
 
-	/**
-	 * 项目名，用于项目识别
-	 */
-	public static final String PROJECT = "project";
+	// /**
+	// * 项目名，用于项目识别
+	// */
+	// public static final String PROJECT = "project";
 
 	/**
 	 * 服务名，用于Module识别
@@ -229,8 +229,8 @@ public final class AgentOptions {
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
-			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, PROJECT, SERVICE, BRANCH,
-			COMMIT, HEARTBEAT, GITURL);
+			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVICE, BRANCH, COMMIT,
+			HEARTBEAT, GITURL);
 
 	private final Map<String, String> options;
 
@@ -669,10 +669,6 @@ public final class AgentOptions {
 		}
 		args.add(0, getVMArgument(agentJarFile));
 		return CommandLineSupport.quote(args);
-	}
-
-	public String getProject() {
-		return getOption(PROJECT, null);
 	}
 
 	public String getSERVICE() {

@@ -115,10 +115,12 @@ class TcpConnection implements IRemoteCommandVisitor {
 		writer.sendHeartbeat();
 	}
 
-	public void sendProjectInfo(String project, String service, String branch,
-			String commit, String classDir, String gitUrl) throws IOException {
+	public void sendProjectInfo(String product, String project, String service,
+			String branch, String commit, String classDir, String gitUrl)
+			throws IOException {
 		reader.setServer(classDir);
-		writer.sendProjectInfo(project, service, branch, commit, gitUrl);
+		writer.sendProjectInfo(product, project, service, branch, commit,
+				gitUrl);
 	}
 
 	public void setHeartbeat(AtomicLong heartbeat) {
