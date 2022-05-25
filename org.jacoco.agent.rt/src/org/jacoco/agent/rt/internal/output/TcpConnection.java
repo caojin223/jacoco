@@ -17,10 +17,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.jacoco.core.runtime.IRemoteCommandVisitor;
-import org.jacoco.core.runtime.RemoteControlReader;
-import org.jacoco.core.runtime.RemoteControlWriter;
-import org.jacoco.core.runtime.RuntimeData;
+import org.jacoco.core.runtime.*;
 
 /**
  * Handler for a single socket based remote connection.
@@ -121,6 +118,10 @@ class TcpConnection implements IRemoteCommandVisitor {
 		reader.setServer(classDir);
 		writer.sendProjectInfo(product, project, service, branch, commit,
 				gitUrl);
+	}
+
+	public void setMatcher(WildcardMatcher includes, WildcardMatcher excludes) {
+		reader.setMatcher(includes, excludes);
 	}
 
 	public void setHeartbeat(AtomicLong heartbeat) {

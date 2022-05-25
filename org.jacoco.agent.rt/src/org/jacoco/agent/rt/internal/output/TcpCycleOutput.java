@@ -15,6 +15,7 @@ package org.jacoco.agent.rt.internal.output;
 import org.jacoco.agent.rt.internal.IExceptionLogger;
 import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.RuntimeData;
+import org.jacoco.core.runtime.WildcardMatcher;
 
 import java.io.*;
 import java.net.Socket;
@@ -49,6 +50,10 @@ public class TcpCycleOutput implements IAgentOutput {
 	 */
 	private int interval;
 
+	/** Matcher，用于判断dump到本地的classes文件，是否需要发送给远端服务器 */
+	private WildcardMatcher includes;
+	private WildcardMatcher excludes;
+
 	private String product, project, service, branch, commit, classDir, gitUrl;
 
 	/**
@@ -65,6 +70,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	public void startup(final AgentOptions options, final RuntimeData data)
 			throws IOException {
 		checkArgs(options);
+		initMatcher(options);
 		worker = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -88,6 +94,7 @@ public class TcpCycleOutput implements IAgentOutput {
 						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendProjectInfo(product, project, service,
 								branch, commit, classDir, gitUrl);
+						connection.setMatcher(includes, excludes);
 						heartbeatThread.start();
 						i = 0;
 						connection.run();
@@ -215,6 +222,12 @@ public class TcpCycleOutput implements IAgentOutput {
 		product = split[split.length - 2];
 		String project = split[split.length - 1];
 		this.project = project.substring(0, project.length() - 4);
+	}
+
+	/** 初始化Matcher，用于判断dump到本地的classes文件，是否需要发送给远端服务器 */
+	private void initMatcher(final AgentOptions options) {
+		includes = new WildcardMatcher(options.getIncludes().replace('.', '/'));
+		excludes = new WildcardMatcher(options.getExcludes().replace('.', '/'));
 	}
 
 	static class Heartbeat implements Runnable {

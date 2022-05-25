@@ -38,6 +38,15 @@ public class RemoteControlReader extends ExecutionDataReader {
 		this.classDir = classDir;
 	}
 
+	/** 过滤器，用于判定哪些class文件符合传输规则 */
+	private WildcardMatcher includes;
+	private WildcardMatcher excludes;
+
+	public void setMatcher(WildcardMatcher includes, WildcardMatcher excludes) {
+		this.includes = includes;
+		this.excludes = excludes;
+	}
+
 	/**
 	 * Create a new read based on the given input stream.
 	 *
@@ -90,7 +99,12 @@ public class RemoteControlReader extends ExecutionDataReader {
 	}
 
 	private void remotePullClasses() throws IOException {
-		final String listStr = in.readUTF();
+		int length = in.readVarInt();
+		byte[] buffer = new byte[length];
+		in.read(buffer);
+		// readUTF有长度限制：65536
+		// final String listStr = in.readUTF();
+		final String listStr = new String(buffer);
 		if (writer == null) {
 			return;
 		}
@@ -114,20 +128,22 @@ public class RemoteControlReader extends ExecutionDataReader {
 			} else {
 				long length = sub.length();
 				if (length > 0) {
-					String subName = sub.getName();
-					String classId = getClassIdByName(subName);
-					if (classIds == null || !classIds.contains(classId)) {
-						FileInputStream in = null;
-						try {
-							in = new FileInputStream(sub);
-							byte[] buffer = new byte[Long.valueOf(length)
-									.intValue()];
-							while (in.read(buffer) != -1) {
-								writer.sendClassFile(subName, buffer);
-							}
-						} finally {
-							if (in != null) {
-								in.close();
+					if (filter(sub)) {
+						String subName = sub.getName();
+						String classId = getClassIdByName(subName);
+						if (classIds == null || !classIds.contains(classId)) {
+							FileInputStream in = null;
+							try {
+								in = new FileInputStream(sub);
+								byte[] buffer = new byte[Long.valueOf(length)
+										.intValue()];
+								while (in.read(buffer) != -1) {
+									writer.sendClassFile(subName, buffer);
+								}
+							} finally {
+								if (in != null) {
+									in.close();
+								}
 							}
 						}
 					}
@@ -143,6 +159,16 @@ public class RemoteControlReader extends ExecutionDataReader {
 			rst = split[split.length - 2];
 		}
 		return rst;
+	}
+
+	private boolean filter(File classFile) {
+		if (includes == null) {
+			return true;
+		}
+		String path = classFile.getPath().replace("\\", "/");
+		int offset = classDir.endsWith("/") ? 0 : 1;
+		String classname = path.substring(classDir.length() + offset);
+		return includes.matches(classname) && !excludes.matches(classname);
 	}
 
 }

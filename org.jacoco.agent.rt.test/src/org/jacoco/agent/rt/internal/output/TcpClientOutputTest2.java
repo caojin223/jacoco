@@ -56,7 +56,7 @@ public class TcpClientOutputTest2 {
 				// +
 				// "giturl=http://gitlab.jkservice.org/jkstack/dv/dv-back-end";
 				+ "giturl=ssh://git@gitlab.jkservice.org:2222/jkstack/dv/dv-back-end.git";
-		String arg = "output=tcpcycle";
+		String arg = "classdumpdir=target/jk/classes,output=tcpcycle";
 		controller.startup(new AgentOptions(arg), data);
 	}
 
