@@ -226,6 +226,21 @@ public final class AgentOptions {
 	 */
 	public static final String GITURL = "giturl";
 
+	/**
+	 * 从环境变量提取时的关键字
+	 */
+	public final Map<String, String> envMap = new HashMap<String, String>() {
+		{
+			put(INCLUDES, "INCLUDES_PACKAGE");
+			put(ADDRESS, "BACKEND_ADDRESS");
+			// 被测服务的名称
+			put(SERVICE, "SERVICE_NAME");
+			put(GITURL, "PROJECT_URL");
+			put(BRANCH, "PROJECT_COMMIT_REF_NAME");
+			put(COMMIT, "PROJECT_COMMIT_SHORT_SHA");
+		}
+	};
+
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,

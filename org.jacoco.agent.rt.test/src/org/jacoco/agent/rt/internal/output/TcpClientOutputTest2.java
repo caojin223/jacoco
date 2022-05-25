@@ -49,13 +49,14 @@ public class TcpClientOutputTest2 {
 			}
 		};
 		data = new RuntimeData();
-		String arg = "service=dv-gateway,branch=develop,commit=15b505394684aaf06785edb11b87e356ceca609c,"
+		String arg1 = "service=dv-gateway,branch=develop,commit=15b505394684aaf06785edb11b87e356ceca609c,"
 				// String arg =
 				// "service=dv-gateway,branch=develop,commit=148eca009a9a585982eebde68e6f24f5abaa174e,"
 				+ "classdumpdir=target/jk/classes,address=localhost,"
 				// +
 				// "giturl=http://gitlab.jkservice.org/jkstack/dv/dv-back-end";
 				+ "giturl=ssh://git@gitlab.jkservice.org:2222/jkstack/dv/dv-back-end.git";
+		String arg = "output=tcpcycle";
 		controller.startup(new AgentOptions(arg), data);
 	}
 

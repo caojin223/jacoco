@@ -156,6 +156,11 @@ public class TcpCycleOutput implements IAgentOutput {
 	}
 
 	private void checkArgs(final AgentOptions options) {
+		String includes = assertGetEnv(AgentOptions.INCLUDES, options);
+		if ("*".equals(includes)) {
+			throw new IllegalArgumentException(
+					AgentOptions.INCLUDES + " is required.");
+		}
 		assertGetEnv(AgentOptions.ADDRESS, options);
 		classDir = getArg(AgentOptions.CLASSDUMPDIR, options, "classes");
 		branch = assertGetEnv(AgentOptions.BRANCH, options);
@@ -173,9 +178,17 @@ public class TcpCycleOutput implements IAgentOutput {
 	private String assertGetEnv(String key, AgentOptions options) {
 		String value = options.getOptions().get(key);
 		if (value == null) {
-			value = System.getenv().get(key);
+			String envKey = options.envMap.get(key);
+			if (envKey != null) {
+				value = System.getenv().get(envKey);
+			}
 			if (value == null) {
-				throw new IllegalArgumentException(key + " arg is required.");
+				String err = envKey == null ? key : key + " or " + envKey;
+				throw new IllegalArgumentException(err + " is required.");
+			} else {
+				options.getOptions().put(key, value);
+				System.out.println(
+						printHeader + "get " + envKey + " from ENV: " + value);
 			}
 		}
 		return value;
