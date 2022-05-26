@@ -100,8 +100,7 @@ public class RemoteControlReader extends ExecutionDataReader {
 
 	private void remotePullClasses() throws IOException {
 		int length = in.readVarInt();
-		byte[] buffer = new byte[length];
-		in.read(buffer);
+		byte[] buffer = readBytesByLength(length);
 		// readUTF有长度限制：65536
 		// final String listStr = in.readUTF();
 		final String listStr = new String(buffer);
@@ -169,6 +168,28 @@ public class RemoteControlReader extends ExecutionDataReader {
 		int offset = classDir.endsWith("/") ? 0 : 1;
 		String classname = path.substring(classDir.length() + offset);
 		return includes.matches(classname) && !excludes.matches(classname);
+	}
+
+	/**
+	 * 远程网络会有TCP粘包拆包问题，所以需要循环多次提取数据
+	 *
+	 * @param length
+	 *            提取的总长度
+	 * @return 提取后的byte数组
+	 */
+	public byte[] readBytesByLength(int length) throws IOException {
+		byte[] buffer, rst = new byte[length];
+		int offset = 0;
+		while (offset < length) {
+			buffer = new byte[length - offset];
+			int readLen = in.read(buffer);
+			if (readLen == length && offset == 0) {
+				return buffer;
+			}
+			System.arraycopy(buffer, 0, rst, offset, readLen);
+			offset += readLen;
+		}
+		return rst;
 	}
 
 }
