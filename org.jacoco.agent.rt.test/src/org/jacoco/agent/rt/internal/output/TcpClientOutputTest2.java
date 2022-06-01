@@ -57,7 +57,14 @@ public class TcpClientOutputTest2 {
 				// "giturl=http://gitlab.jkservice.org/jkstack/dv/dv-back-end";
 				+ "giturl=ssh://git@gitlab.jkservice.org:2222/jkstack/dv/dv-back-end.git";
 		// 192.168.4.21
-		String arg = "classdumpdir=target/jk/classes,output=tcpcycle,commit=88a5a45c,address=192.168.4.21";
+		// String arg =
+		// "classdumpdir=target/jk/classes,output=tcpcycle,branch=feature/zpc_1026494,commit=27de3182,address=192.168.31.53";
+		String arg = "includes=cn.devops.*,"
+				+ "giturl=http://gitlab.jkservice.org/jkstack/qa/test-platform/devops-security-master,"
+				+ "service=product_management," + "branch=master,"
+				+ "commit=d9eaca473353bd2a9aa49a3522c0dfe4b513c0d0,"
+				+ "classdumpdir=target/jk/classes/product1,"
+				+ "address=192.168.31.231";
 		controller.startup(new AgentOptions(arg), data);
 	}
 

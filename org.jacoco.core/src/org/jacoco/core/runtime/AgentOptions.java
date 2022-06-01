@@ -232,7 +232,7 @@ public final class AgentOptions {
 	public final Map<String, String> envMap = new HashMap<String, String>() {
 		{
 			put(INCLUDES, "INCLUDES_PACKAGE");
-			put(ADDRESS, "BACKEND_ADDRESS");
+			put(ADDRESS, "QA_PLATFORM_ADDRESS");
 			// 被测服务的名称
 			put(SERVICE, "SERVICE_NAME");
 			put(GITURL, "PROJECT_URL");
