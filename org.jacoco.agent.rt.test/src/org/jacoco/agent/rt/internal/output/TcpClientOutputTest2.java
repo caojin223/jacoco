@@ -60,11 +60,11 @@ public class TcpClientOutputTest2 {
 		// String arg =
 		// "classdumpdir=target/jk/classes,output=tcpcycle,branch=feature/zpc_1026494,commit=27de3182,address=192.168.31.53";
 		String arg = "includes=cn.devops.*,"
-				+ "giturl=http://gitlab.jkservice.org/jkstack/qa/test-platform/devops-security-master,"
-				+ "service=product_management," + "branch=master,"
-				+ "commit=d9eaca473353bd2a9aa49a3522c0dfe4b513c0d0,"
+				+ "giturl=http://gitlab.jkservice.org/jkstack/qa/test-platform/devops-security,"
+				+ "service=product_management,branch=master,"
+				+ "commit=1519597d3a58a33b4c46c75ccff25071369b8195,"
 				+ "classdumpdir=target/jk/classes/product1,"
-				+ "address=192.168.31.231";
+				+ "address=192.168.4.21";
 		controller.startup(new AgentOptions(arg), data);
 	}
 
