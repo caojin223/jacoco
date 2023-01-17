@@ -12,10 +12,13 @@
  *******************************************************************************/
 package org.jacoco.agent.rt.internal.output;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.jacoco.core.runtime.*;
 
@@ -118,6 +121,23 @@ class TcpConnection implements IRemoteCommandVisitor {
 		reader.setServer(classDir);
 		writer.sendProjectInfo(product, project, service, branch, commit,
 				gitUrl);
+	}
+
+	public void sendJarClasses(File jarFile) throws IOException {
+		JarFile jar = new JarFile(jarFile);
+		final String spring = "org/springframework";
+		try {
+			Enumeration<JarEntry> entries = jar.entries();
+			while (entries.hasMoreElements()) {
+				JarEntry entry = entries.nextElement();
+				if (!entry.isDirectory() && entry.getName().endsWith(".class")
+						&& !entry.getName().startsWith(spring)) {
+					writer.sendJarEntry(jar, entry);
+				}
+			}
+		} finally {
+			jar.close();
+		}
 	}
 
 	public void setMatcher(WildcardMatcher includes, WildcardMatcher excludes) {

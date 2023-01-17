@@ -21,6 +21,9 @@ import org.junit.Test;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Enumeration;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * Unit tests for {@link TcpClientOutput}.
@@ -60,12 +63,76 @@ public class TcpClientOutputTest2 {
 		// String arg =
 		// "classdumpdir=target/jk/classes,output=tcpcycle,branch=feature/zpc_1026494,commit=27de3182,address=192.168.31.53";
 		String arg = "includes=cn.devops.*,"
-				+ "giturl=http://gitlab.jkservice.org/jkstack/qa/test-platform/devops-security,"
-				+ "service=product_management,branch=master,"
-				+ "commit=1519597d3a58a33b4c46c75ccff25071369b8195,"
+				+ "giturl=http://gitlab.jkservice.org/jkstack/dsp/dsp-backend.git,"
+				+ "service=domain-appstore," + "branch=refactor-Dockerfiles,"
+				+ "commit=7f34843b,"
 				+ "classdumpdir=target/jk/classes/product1,"
-				+ "address=192.168.4.21";
+				+ "address=192.168.31.53";
+		arg = ""
+				// + "includes=cn.devops.*,"
+				+ "giturl=https://bitbucket.kucoin.net/scm/devops/taskpointanalyze.git,"
+				+ "service=task,branch=master,"
+				+ "commit=610948aafc8433bc61b6397e6c27e3553bff96d4,"
+				+ "classdumpdir=target/jk/classes/product1,"
+				+ "jarpath=D:/workspace/Git/java/jk/backend/jacoco/org.jacoco.agent/target/classes/TaskPointAnalyze-0.0.1-SNAPSHOT.jar,"
+				+ "address=192.168.2.107";
 		controller.startup(new AgentOptions(arg), data);
+	}
+
+	@Test
+	public void testJarFile() throws Exception {
+
+		String path = "D:/workspace/Git/java/jk/backend/devops-coverage/target/devops_coverage-1.0.0-SNAPSHOT.jar";
+		File file = new File(path);
+
+		final File workDir = File.createTempFile("unjar", "",
+				new File(System.getProperty("user.dir")));
+		workDir.delete();
+		workDir.mkdirs();
+		if (!workDir.isDirectory()) {
+			System.err.println("Mkdirs failed to create " + workDir);
+			System.exit(-1);
+		}
+
+		// 解压jar文件
+		unJar(file, workDir);
+
+	}
+
+	public static void unJar(File jarFile, File toDir) throws IOException {
+		JarFile jar = new JarFile(jarFile);
+		try {
+			Enumeration<JarEntry> entries = jar.entries();
+			while (entries.hasMoreElements()) {
+				JarEntry entry = entries.nextElement();
+				if (!entry.isDirectory()) {
+					InputStream in = jar.getInputStream(entry);
+					try {
+						File file = new File(toDir, entry.getName());
+						if (!file.getParentFile().mkdirs()) {
+							if (!file.getParentFile().isDirectory()) {
+								throw new IOException("Mkdirs failed to create "
+										+ file.getParentFile().toString());
+							}
+						}
+						OutputStream out = new FileOutputStream(file);
+						try {
+							byte[] buffer = new byte[8192];
+							int i;
+							while ((i = in.read(buffer)) != -1) {
+								out.write(buffer, 0, i);
+							}
+						} finally {
+							out.close();
+						}
+					} finally {
+						in.close();
+					}
+				}
+			}
+		} finally {
+			jar.close();
+		}
 	}
 
 	@Test
@@ -78,7 +145,7 @@ public class TcpClientOutputTest2 {
 		// data.setExtraInfo(extraInfo.toString());
 
 		// TcpCycleOutput tcpCycle = (TcpCycleOutput) this.controller;
-		// File file = new File("C:\\Users\\caoji\\Desktop\\security");
+		// File file = new File("C:/Users/caoji/Desktop/security");
 		// tcpCycle.sendFile(file);
 
 		synchronized (this.controller) {

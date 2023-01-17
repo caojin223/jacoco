@@ -17,3 +17,4 @@ Note: We do not answer general questions in the project's issue tracker. Please 
 -------------------------------------------------------------------------
 
 mvn spotless:apply
+mvn com.diffplug.spotless:spotless-maven-plugin:apply

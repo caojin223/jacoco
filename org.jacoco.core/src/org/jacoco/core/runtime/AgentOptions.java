@@ -227,6 +227,11 @@ public final class AgentOptions {
 	public static final String GITURL = "giturl";
 
 	/**
+	 * 目标服务的地址，用于解压获得classes文件
+	 */
+	public static final String JARPATH = "jarpath";
+
+	/**
 	 * 从环境变量提取时的关键字
 	 */
 	public final Map<String, String> envMap = new HashMap<String, String>() {
@@ -236,6 +241,7 @@ public final class AgentOptions {
 			// 被测服务的名称
 			put(SERVICE, "SERVICE_NAME");
 			put(GITURL, "PROJECT_URL");
+			put(JARPATH, "JAR_PATH");
 			put(BRANCH, "PROJECT_COMMIT_REF_NAME");
 			put(COMMIT, "PROJECT_COMMIT_SHORT_SHA");
 		}
@@ -245,7 +251,7 @@ public final class AgentOptions {
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
 			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVICE, BRANCH, COMMIT,
-			HEARTBEAT, GITURL);
+			HEARTBEAT, GITURL, JARPATH);
 
 	private final Map<String, String> options;
 

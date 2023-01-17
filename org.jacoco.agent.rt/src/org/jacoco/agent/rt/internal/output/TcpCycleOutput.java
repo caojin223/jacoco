@@ -54,7 +54,10 @@ public class TcpCycleOutput implements IAgentOutput {
 	private WildcardMatcher includes;
 	private WildcardMatcher excludes;
 
-	private String product, project, service, branch, commit, classDir, gitUrl;
+	private String product, project, service, branch, commit, classDir, gitUrl,
+			jarpath;
+
+	private File jarFile;
 
 	/**
 	 * New controller instance.
@@ -94,6 +97,7 @@ public class TcpCycleOutput implements IAgentOutput {
 						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendProjectInfo(product, project, service,
 								branch, commit, classDir, gitUrl);
+						connection.sendJarClasses(jarFile);
 						connection.setMatcher(includes, excludes);
 						heartbeatThread.start();
 						i = 0;
@@ -163,11 +167,11 @@ public class TcpCycleOutput implements IAgentOutput {
 	}
 
 	private void checkArgs(final AgentOptions options) {
-		String includes = assertGetEnv(AgentOptions.INCLUDES, options);
-		if ("*".equals(includes)) {
-			throw new IllegalArgumentException(
-					AgentOptions.INCLUDES + " is required.");
-		}
+		// String includes = assertGetEnv(AgentOptions.INCLUDES, options);
+		// if ("*".equals(includes)) {
+		// throw new IllegalArgumentException(
+		// AgentOptions.INCLUDES + " is required.");
+		// }
 		assertGetEnv(AgentOptions.ADDRESS, options);
 		classDir = getArg(AgentOptions.CLASSDUMPDIR, options, "classes");
 		branch = assertGetEnv(AgentOptions.BRANCH, options);
@@ -180,6 +184,12 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 		analyzeGitUrl(gitUrl);
 		service = assertGetEnv(AgentOptions.SERVICE, options);
+		jarpath = assertGetEnv(AgentOptions.JARPATH, options);
+		jarFile = new File(jarpath);
+		if (!jarFile.exists()) {
+			throw new IllegalArgumentException(
+					"Jar file is not exist: " + jarpath);
+		}
 	}
 
 	private String assertGetEnv(String key, AgentOptions options) {

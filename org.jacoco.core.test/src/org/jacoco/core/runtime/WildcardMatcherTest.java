@@ -45,6 +45,8 @@ public class WildcardMatcherTest {
 
 	@Test
 	public void asterix_should_match_any_number_of_any_character() {
+		assertTrue(new WildcardMatcher("com.jkstack.*.entity.*")
+				.matches("com.jkstack.dv.report.entity.datamanager.datamodel"));
 		assertTrue(new WildcardMatcher("*").matches(""));
 		assertTrue(new WildcardMatcher("*").matches("java/lang/Object"));
 		assertTrue(new WildcardMatcher("*Test").matches("jacoco/MatcherTest"));

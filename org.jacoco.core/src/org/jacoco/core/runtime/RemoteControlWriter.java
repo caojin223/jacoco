@@ -12,8 +12,9 @@
  *******************************************************************************/
 package org.jacoco.core.runtime;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.jacoco.core.data.ExecutionDataWriter;
 
@@ -23,10 +24,14 @@ import org.jacoco.core.data.ExecutionDataWriter;
 public class RemoteControlWriter extends ExecutionDataWriter
 		implements IRemoteCommandVisitor {
 
-	/** Block identifier to confirm successful command execution. */
+	/**
+	 * Block identifier to confirm successful command execution.
+	 */
 	public static final byte BLOCK_CMDOK = 0x20;
 
-	/** Block identifier for dump command */
+	/**
+	 * Block identifier for dump command
+	 */
 	public static final byte BLOCK_CMDDUMP = 0x40;
 
 	/**
@@ -74,6 +79,27 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			}
 			flushHeartbeat();
 		}
+	}
+
+	public void sendJarEntry(JarFile jar, JarEntry entry) throws IOException {
+		String name = entry.getName();
+		synchronized (out) {
+			out.writeByte(BLOCK_FILE);
+			out.writeUTF(name);
+			InputStream in = jar.getInputStream(entry);
+			long size = entry.getSize();
+			out.writeVarInt((int) size);
+			try {
+				byte[] buffer = new byte[8192];
+				int i;
+				while ((i = in.read(buffer)) != -1) {
+					out.write(buffer, 0, i);
+				}
+			} finally {
+				in.close();
+			}
+		}
+		flushHeartbeat();
 	}
 
 	public void sendHeartbeat() throws IOException {
