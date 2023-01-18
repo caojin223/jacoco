@@ -237,12 +237,12 @@ public final class AgentOptions {
 	public final Map<String, String> envMap = new HashMap<String, String>() {
 		{
 			put(INCLUDES, "INCLUDES_PACKAGE");
-			put(ADDRESS, "QA_PLATFORM_ADDRESS");
+			put(ADDRESS, "BACKEND_ADDRESS");
 			// 被测服务的名称
-			put(SERVICE, "SERVICE_NAME");
-			put(GITURL, "PROJECT_URL");
+			put(SERVICE, "appName");
+			put(GITURL, "GIT_URL");
 			put(JARPATH, "JAR_PATH");
-			put(BRANCH, "PROJECT_COMMIT_REF_NAME");
+			put(BRANCH, "branchName");
 			put(COMMIT, "PROJECT_COMMIT_SHORT_SHA");
 		}
 	};

@@ -70,11 +70,12 @@ public class TcpClientOutputTest2 {
 				+ "address=192.168.31.53";
 		arg = ""
 				// + "includes=cn.devops.*,"
-				+ "giturl=https://bitbucket.kucoin.net/scm/devops/taskpointanalyze.git,"
+				+ "giturl=ssh://git@bitbucket.kucoin.net/devops/taskpointanalyze.git,"
 				+ "service=task,branch=master,"
 				+ "commit=610948aafc8433bc61b6397e6c27e3553bff96d4,"
 				+ "classdumpdir=target/jk/classes/product1,"
-				+ "jarpath=D:/workspace/Git/java/jk/backend/jacoco/org.jacoco.agent/target/classes/TaskPointAnalyze-0.0.1-SNAPSHOT.jar,"
+				// +
+				// "jarpath=C:/Users/caoji/Desktop/agentTest/app/TaskPointAnalyze-0.0.1-SNAPSHOT.jar,"
 				+ "address=192.168.2.107";
 		controller.startup(new AgentOptions(arg), data);
 	}

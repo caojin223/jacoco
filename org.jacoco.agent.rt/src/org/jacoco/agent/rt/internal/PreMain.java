@@ -45,7 +45,7 @@ public final class PreMain {
 	public static void premain(final String options, final Instrumentation inst)
 			throws Exception {
 		System.out.println("-----jacoco----------> startup: " + options);
-		System.out.println("-----jacoco----------> path: "
+		System.out.println("-----jacoco----------> WorkDir: "
 				+ System.getProperty("user.dir"));
 		final AgentOptions agentOptions = new AgentOptions(options);
 

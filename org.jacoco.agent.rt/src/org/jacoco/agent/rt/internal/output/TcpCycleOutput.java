@@ -20,6 +20,7 @@ import org.jacoco.core.runtime.WildcardMatcher;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -28,6 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TcpCycleOutput implements IAgentOutput {
 
 	private final IExceptionLogger logger;
+
+	private AgentOptions options;
 
 	private TcpConnection connection;
 
@@ -57,7 +60,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	private String product, project, service, branch, commit, classDir, gitUrl,
 			jarpath;
 
-	private File jarFile;
+	private File jarFile = null;
 
 	/**
 	 * New controller instance.
@@ -72,8 +75,9 @@ public class TcpCycleOutput implements IAgentOutput {
 	@Override
 	public void startup(final AgentOptions options, final RuntimeData data)
 			throws IOException {
-		checkArgs(options);
-		initMatcher(options);
+		this.options = options;
+		checkArgs();
+		initMatcher();
 		worker = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -166,33 +170,54 @@ public class TcpCycleOutput implements IAgentOutput {
 		}
 	}
 
-	private void checkArgs(final AgentOptions options) {
-		// String includes = assertGetEnv(AgentOptions.INCLUDES, options);
+	private void checkArgs() {
+		// String includes = assertGetEnv(AgentOptions.INCLUDES);
 		// if ("*".equals(includes)) {
 		// throw new IllegalArgumentException(
 		// AgentOptions.INCLUDES + " is required.");
 		// }
-		assertGetEnv(AgentOptions.ADDRESS, options);
-		classDir = getArg(AgentOptions.CLASSDUMPDIR, options, "classes");
-		branch = assertGetEnv(AgentOptions.BRANCH, options);
-		commit = assertGetEnv(AgentOptions.COMMIT, options);
+		assertGetEnv(AgentOptions.ADDRESS);
+		classDir = getArg(AgentOptions.CLASSDUMPDIR, "classes");
+		branch = assertGetEnv(AgentOptions.BRANCH);
+		commit = assertGetEnv(AgentOptions.COMMIT);
 		interval = options.getHeartbeat();
 
-		gitUrl = assertGetEnv(AgentOptions.GITURL, options);
+		gitUrl = assertGetEnv(AgentOptions.GITURL);
 		if (!gitUrl.toLowerCase().endsWith(".git")) {
 			gitUrl += ".git";
 		}
 		analyzeGitUrl(gitUrl);
-		service = assertGetEnv(AgentOptions.SERVICE, options);
-		jarpath = assertGetEnv(AgentOptions.JARPATH, options);
-		jarFile = new File(jarpath);
-		if (!jarFile.exists()) {
+		service = assertGetEnv(AgentOptions.SERVICE);
+		/* jarpath可指定被测服务的jar包地址，不传时，默认到/app目录下查找 */
+		jarpath = getArg(AgentOptions.JARPATH, "");
+		if ("".equals(jarpath)) {
+			File jarParent = new File("/app");
+			if (jarParent.exists()) {
+				File[] subs = jarParent.listFiles();
+				for (File sub : subs) {
+					if (!sub.isDirectory() && sub.getName().endsWith(".jar")) {
+						if (jarFile == null) {
+							jarFile = sub;
+						} else {
+							throw new IllegalArgumentException(
+									"More than one jar in /app folder: "
+											+ Arrays.toString(subs));
+						}
+					}
+				}
+			} else {
+				throw new IllegalArgumentException("/app folder is not exist");
+			}
+		} else {
+			jarFile = new File(jarpath);
+		}
+		if (jarFile == null || !jarFile.exists()) {
 			throw new IllegalArgumentException(
 					"Jar file is not exist: " + jarpath);
 		}
 	}
 
-	private String assertGetEnv(String key, AgentOptions options) {
+	private String assertGetEnv(String key) {
 		String value = options.getOptions().get(key);
 		if (value == null) {
 			String envKey = options.envMap.get(key);
@@ -211,8 +236,7 @@ public class TcpCycleOutput implements IAgentOutput {
 		return value;
 	}
 
-	private String getArg(String key, AgentOptions options,
-			String defaultValue) {
+	private String getArg(String key, String defaultValue) {
 		String value = options.getOptions().get(key);
 		if (value == null) {
 			value = System.getenv().get(key);
@@ -235,7 +259,7 @@ public class TcpCycleOutput implements IAgentOutput {
 	}
 
 	/** 初始化Matcher，用于判断dump到本地的classes文件，是否需要发送给远端服务器 */
-	private void initMatcher(final AgentOptions options) {
+	private void initMatcher() {
 		includes = new WildcardMatcher(options.getIncludes().replace('.', '/'));
 		excludes = new WildcardMatcher(options.getExcludes().replace('.', '/'));
 	}
