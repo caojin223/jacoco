@@ -116,29 +116,16 @@ class TcpConnection implements IRemoteCommandVisitor {
 	}
 
 	public void sendProjectInfo(String product, String project, String service,
-			String branch, String commit, String classDir, String gitUrl)
-			throws IOException {
-		reader.setServer(classDir);
+			String branch, String commit, String classDir, String gitUrl,
+			File jarFile) throws IOException {
+		reader.setServer(classDir, jarFile);
 		writer.sendProjectInfo(product, project, service, branch, commit,
 				gitUrl);
 	}
 
-	public void sendJarClasses(File jarFile) throws IOException {
-		JarFile jar = new JarFile(jarFile);
-		final String spring = "org/springframework";
-		try {
-			Enumeration<JarEntry> entries = jar.entries();
-			while (entries.hasMoreElements()) {
-				JarEntry entry = entries.nextElement();
-				if (!entry.isDirectory() && entry.getName().endsWith(".class")
-						&& !entry.getName().startsWith(spring)) {
-					writer.sendJarEntry(jar, entry);
-				}
-			}
-		} finally {
-			jar.close();
-		}
-	}
+	// public void sendJarClasses() throws IOException {
+	// reader.sendJarClasses();
+	// }
 
 	public void setMatcher(WildcardMatcher includes, WildcardMatcher excludes) {
 		reader.setMatcher(includes, excludes);

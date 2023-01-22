@@ -100,8 +100,8 @@ public class TcpCycleOutput implements IAgentOutput {
 						connection.setHeartbeat(heartbeat);
 						// 用于通知服务端初始化项目信息，如拉取代码等
 						connection.sendProjectInfo(product, project, service,
-								branch, commit, classDir, gitUrl);
-						connection.sendJarClasses(jarFile);
+								branch, commit, classDir, gitUrl, jarFile);
+						// connection.sendJarClasses(jarFile);
 						connection.setMatcher(includes, excludes);
 						heartbeatThread.start();
 						i = 0;

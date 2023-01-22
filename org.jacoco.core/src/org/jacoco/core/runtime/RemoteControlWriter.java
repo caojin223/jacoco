@@ -90,7 +90,7 @@ public class RemoteControlWriter extends ExecutionDataWriter
 			long size = entry.getSize();
 			out.writeVarInt((int) size);
 			try {
-				byte[] buffer = new byte[8192];
+				byte[] buffer = new byte[(int) size];
 				int i;
 				while ((i = in.read(buffer)) != -1) {
 					out.write(buffer, 0, i);

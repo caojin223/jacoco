@@ -14,8 +14,11 @@ package org.jacoco.core.runtime;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.jacoco.core.data.ExecutionDataReader;
 import org.jacoco.core.data.ExecutionDataWriter;
@@ -33,9 +36,14 @@ public class RemoteControlReader extends ExecutionDataReader {
 	private RemoteControlWriter writer;
 
 	private String classDir;
+	/**
+	 * 设置jar包的路径，直接提取其中的class文件
+	 */
+	private File jarFile;
 
-	public void setServer(String classDir) {
+	public void setServer(String classDir, File jarFile) {
 		this.classDir = classDir;
+		this.jarFile = jarFile;
 	}
 
 	/** 过滤器，用于判定哪些class文件符合传输规则 */
@@ -72,7 +80,8 @@ public class RemoteControlReader extends ExecutionDataReader {
 		case RemoteControlWriter.BLOCK_CMDOK:
 			return false;
 		case ExecutionDataWriter.BLOCK_PULL_CLASSES:
-			remotePullClasses();
+			// remotePullClasses();
+			sendJarClasses();
 			return true;
 		default:
 			return super.readBlock(blockid);
@@ -190,6 +199,23 @@ public class RemoteControlReader extends ExecutionDataReader {
 			offset += readLen;
 		}
 		return rst;
+	}
+
+	public void sendJarClasses() throws IOException {
+		JarFile jar = new JarFile(jarFile);
+		final String spring = "org/springframework";
+		try {
+			Enumeration<JarEntry> entries = jar.entries();
+			while (entries.hasMoreElements()) {
+				JarEntry entry = entries.nextElement();
+				if (!entry.isDirectory() && entry.getName().endsWith(".class")
+						&& !entry.getName().startsWith(spring)) {
+					writer.sendJarEntry(jar, entry);
+				}
+			}
+		} finally {
+			jar.close();
+		}
 	}
 
 }
