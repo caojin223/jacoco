@@ -59,6 +59,9 @@ public class ExecutionDataWriter
 	/** 服务端拉取classes */
 	public static final byte BLOCK_PULL_CLASSES = 0x16;
 
+	/** 服务端拉取实时classes */
+	public static final byte BLOCK_PULL_RUNNING_CLASSES = 0x17;
+
 	/** Underlying data output */
 	protected final CompactDataOutput out;
 

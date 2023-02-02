@@ -13,10 +13,7 @@
 package org.jacoco.core.runtime;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -82,6 +79,9 @@ public class RemoteControlReader extends ExecutionDataReader {
 		case ExecutionDataWriter.BLOCK_PULL_CLASSES:
 			// remotePullClasses();
 			sendJarClasses();
+			return true;
+		case ExecutionDataWriter.BLOCK_PULL_RUNNING_CLASSES:
+			remotePullClasses();
 			return true;
 		default:
 			return super.readBlock(blockid);
@@ -201,20 +201,63 @@ public class RemoteControlReader extends ExecutionDataReader {
 		return rst;
 	}
 
-	public void sendJarClasses() throws IOException {
+	private void sendJarClasses() throws IOException {
+		// readUTF有长度限制：65536
+		final String listStr = in.readUTF();
+		if (writer == null) {
+			return;
+		}
+		Set jars = listStr.isEmpty() ? null
+				: new HashSet(Arrays.asList(listStr.split("\\|")));
+		sendJarClasses(jarFile, jars);
+	}
+
+	public void sendJarClasses(File jarFile, Set jars) throws IOException {
 		JarFile jar = new JarFile(jarFile);
 		final String spring = "org/springframework";
 		try {
 			Enumeration<JarEntry> entries = jar.entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
-				if (!entry.isDirectory() && entry.getName().endsWith(".class")
-						&& !entry.getName().startsWith(spring)) {
-					writer.sendJarEntry(jar, entry);
+				String name = entry.getName();
+				if (!entry.isDirectory()) {
+					if (name.endsWith(".jar")) {
+						String[] split = name.split("/");
+						String jarName = split[split.length - 1];
+						if (jars.contains(jarName)) {
+							createSubJar(jar, entry, jars);
+						}
+					} else if (name.endsWith(".class")
+							&& !name.startsWith(spring)) {
+						writer.sendJarEntry(jar, entry);
+					}
 				}
 			}
 		} finally {
 			jar.close();
+		}
+	}
+
+	private void createSubJar(JarFile jar, JarEntry entry, Set jars)
+			throws IOException {
+		File file = new File(new File(System.getProperty("user.dir")),
+				"target/temp/" + entry.getName());
+		file.delete();
+		file.getParentFile().mkdirs();
+		OutputStream out = new FileOutputStream(file);
+		InputStream in = jar.getInputStream(entry);
+		try {
+			int size = (int) Math.min(entry.getSize(), Integer.MAX_VALUE);
+			byte[] buffer = new byte[size];
+			int i;
+			while ((i = in.read(buffer)) != -1) {
+				out.write(buffer, 0, i);
+			}
+			sendJarClasses(file, jars);
+		} finally {
+			in.close();
+			out.close();
+			file.delete();
 		}
 	}
 

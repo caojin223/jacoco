@@ -74,19 +74,27 @@ public class TcpClientOutputTest2 {
 				+ "service=task,branch=master,"
 				+ "commit=610948aafc8433bc61b6397e6c27e3553bff96d4,"
 				+ "classdumpdir=target/jk/classes/product1,"
-				// +
-				// "jarpath=C:/Users/caoji/Desktop/agentTest/app/TaskPointAnalyze-0.0.1-SNAPSHOT.jar,"
+				+ "jarpath=C:/Users/caoji/Desktop/agentTest/margin-fund/margin-fund-starter.jar,"
 				+ "address=192.168.2.107";
+		arg = ""
+				// + "includes=cn.devops.*,"
+				+ "giturl=ssh://git@bitbucket.kucoin.net/kcmg/margin-fund.git,"
+				+ "service=margin-fund,branch=release-code_test_v2,"
+				+ "commit=95dff3ed,"
+				+ "classdumpdir=target/jk/classes/product1,"
+				+ "jarpath=C:/Users/caoji/Desktop/agentTest/margin-fund/margin-fund-starter.jar,"
+				+ "address=192.168.2.107";
+		// kcmg|margin-fund|margin-fund|release-code_test_v2|95dff3ed|ssh://git@bitbucket.kucoin.net/kcmg/margin-fund.git
 		controller.startup(new AgentOptions(arg), data);
 	}
 
 	@Test
 	public void testJarFile() throws Exception {
 
-		String path = "D:/workspace/Git/java/jk/backend/devops-coverage/target/devops_coverage-1.0.0-SNAPSHOT.jar";
+		String path = "C:/Users/caoji/Desktop/agentTest/margin-fund/margin-fund-starter.jar";
 		File file = new File(path);
 
-		final File workDir = File.createTempFile("unjar", "",
+		final File workDir = File.createTempFile("unjar_", "",
 				new File(System.getProperty("user.dir")));
 		workDir.delete();
 		workDir.mkdirs();
@@ -106,10 +114,12 @@ public class TcpClientOutputTest2 {
 			Enumeration<JarEntry> entries = jar.entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
-				if (!entry.isDirectory()) {
+				String name = entry.getName();
+				if (!entry.isDirectory()
+						&& (name.endsWith(".class") || name.endsWith(".jar"))) {
 					InputStream in = jar.getInputStream(entry);
 					try {
-						File file = new File(toDir, entry.getName());
+						File file = new File(toDir, name);
 						if (!file.getParentFile().mkdirs()) {
 							if (!file.getParentFile().isDirectory()) {
 								throw new IOException("Mkdirs failed to create "
@@ -118,7 +128,9 @@ public class TcpClientOutputTest2 {
 						}
 						OutputStream out = new FileOutputStream(file);
 						try {
-							byte[] buffer = new byte[8192];
+							int size = (int) Math.min(entry.getSize(),
+									Integer.MAX_VALUE);
+							byte[] buffer = new byte[size];
 							int i;
 							while ((i = in.read(buffer)) != -1) {
 								out.write(buffer, 0, i);
