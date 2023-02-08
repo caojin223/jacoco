@@ -242,7 +242,7 @@ public final class AgentOptions {
 			put(SERVICE, "appName");
 			put(GITURL, "GIT_URL");
 			put(JARPATH, "JAR_PATH");
-			put(BRANCH, "branchName");
+			put(BRANCH, "ORIGIN_BRANCH");
 			put(COMMIT, "COMMIT_SHORT_SHA");
 		}
 	};

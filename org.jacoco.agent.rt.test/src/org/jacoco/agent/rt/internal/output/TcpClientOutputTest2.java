@@ -79,7 +79,7 @@ public class TcpClientOutputTest2 {
 		arg = ""
 				// + "includes=cn.devops.*,"
 				+ "giturl=ssh://git@bitbucket.kucoin.net/kcmg/margin-fund.git,"
-				+ "service=margin-fund,branch=release-code_test_v2,"
+				+ "service=margin-fund,branch=release/code_test_v2,"
 				+ "commit=95dff3ed,"
 				+ "classdumpdir=target/jk/classes/product1,"
 				+ "jarpath=C:/Users/caoji/Desktop/agentTest/margin-fund/margin-fund-starter.jar,"

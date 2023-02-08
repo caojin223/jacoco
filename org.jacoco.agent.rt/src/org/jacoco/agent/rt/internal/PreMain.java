@@ -32,6 +32,8 @@ public final class PreMain {
 		// no instances
 	}
 
+	private static final String VERSION = "v1.6";
+
 	/**
 	 * This method is called by the JVM to initialize Java agents.
 	 *
@@ -44,9 +46,12 @@ public final class PreMain {
 	 */
 	public static void premain(final String options, final Instrumentation inst)
 			throws Exception {
-		System.out.println("-----jacoco----------> startup: " + options);
+
+		System.out.printf("-----jacoco----------> %s startup: %s%n", VERSION,
+				options);
 		System.out.println("-----jacoco----------> WorkDir: "
 				+ System.getProperty("user.dir"));
+		System.setProperty("agentVersion", VERSION);
 		final AgentOptions agentOptions = new AgentOptions(options);
 
 		final Agent agent = Agent.getInstance(agentOptions);
