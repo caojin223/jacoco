@@ -20,7 +20,9 @@ import org.jacoco.core.runtime.WildcardMatcher;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -76,11 +78,21 @@ public class TcpCycleOutput implements IAgentOutput {
 	public void startup(final AgentOptions options, final RuntimeData data)
 			throws IOException {
 		this.options = options;
-		checkArgs();
-		initMatcher();
+		// checkArgs();
+		// initMatcher();
 		worker = new Thread(new Runnable() {
 			@Override
 			public void run() {
+
+				try {
+					checkArgs();
+					initMatcher();
+				} catch (IllegalArgumentException e) {
+					System.err.printf("%s 启动参数错误: %s\n", getTimeStr(), options);
+					e.printStackTrace();
+					return;
+				}
+
 				int i = 0;
 				while (running) {
 					Socket socket = null;
@@ -127,8 +139,9 @@ public class TcpCycleOutput implements IAgentOutput {
 					sleeper(10 * 1000
 							* (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18)));
 					if (running) {
-						System.err.printf(printHeader + "尝试重连中......，第%d次\n",
-								++i);
+						System.err.printf("%s %s 尝试重连中 -> %s:%s ......，第%d次\n",
+								getTimeStr(), printHeader, options.getAddress(),
+								options.getPort(), ++i);
 					}
 				}
 			}
@@ -138,14 +151,26 @@ public class TcpCycleOutput implements IAgentOutput {
 		worker.start();
 	}
 
+	final SimpleDateFormat sdf = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm:ss:SSS");
+
+	private synchronized String getTimeStr() {
+		// long timestamp = System.currentTimeMillis();
+		return sdf.format(new Date());
+	}
+
 	public void shutdown() throws Exception {
 		running = false;
-		connection.close();
+		if (connection != null) {
+			connection.close();
+		}
 		worker.join();
 	}
 
 	public void writeExecutionData(final boolean reset) throws IOException {
-		connection.writeExecutionData(reset);
+		if (connection != null) {
+			connection.writeExecutionData(reset);
+		}
 	}
 
 	/**

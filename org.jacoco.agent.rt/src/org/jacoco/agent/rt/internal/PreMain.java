@@ -32,7 +32,7 @@ public final class PreMain {
 		// no instances
 	}
 
-	private static final String VERSION = "v1.6";
+	private static final String VERSION = "v1.7";
 
 	/**
 	 * This method is called by the JVM to initialize Java agents.

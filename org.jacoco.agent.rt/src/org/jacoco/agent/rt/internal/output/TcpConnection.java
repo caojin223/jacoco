@@ -92,7 +92,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 	 * @throws IOException
 	 */
 	public void close() throws IOException {
-		if (!socket.isClosed()) {
+		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
 	}
