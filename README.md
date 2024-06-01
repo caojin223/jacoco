@@ -18,3 +18,4 @@ Note: We do not answer general questions in the project's issue tracker. Please 
 
 mvn spotless:apply
 mvn com.diffplug.spotless:spotless-maven-plugin:apply
+mvn clean install -s /Users/jancao/.m2/settings-empty.xml -DskipTests -Dmaven.test.skip=true

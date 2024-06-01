@@ -100,7 +100,8 @@ public class TcpCycleOutput implements IAgentOutput {
 
 				try {
 					checkArgs();
-//					if (master.equals(branch) || branch.startsWith(feature)) {
+					// if (master.equals(branch) || branch.startsWith(feature))
+					// {
 					if (master.equals(branch)) {
 						options.setIncludes("-");
 						options.setExcludes("*");

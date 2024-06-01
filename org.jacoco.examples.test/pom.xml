@@ -135,6 +135,15 @@
           </properties>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>1.8</source> <!-- 或者 7, 11, 17 等 -->
+          <target>1.8</target> <!-- 或者 7, 11, 17 等 -->
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
