@@ -35,18 +35,14 @@ class ClassFileDumper {
 	 *            should be written
 	 */
 	ClassFileDumper(final String location) {
-		// if (location == null) {
-		// this.location = null;
-		// AgentOptions.print.println("ClassFileDumper.location is null");
-		// } else {
-		// this.location = new File(location);
-		// AgentOptions.print.printf("ClassFileDumper.location: %s\n",
-		// this.location.getAbsolutePath());
-		// }
-		this.location = new File(AgentOptions.TEMPPATH);
-		AgentOptions.print.printf("ClassFileDumper.location: %s\n",
-				this.location.getAbsolutePath());
-
+		if (location == null) {
+			this.location = null;
+			AgentOptions.print.println("ClassFileDumper.location is null");
+		} else {
+			this.location = new File(location);
+			AgentOptions.print.printf("ClassFileDumper.location: %s\n",
+					this.location.getAbsolutePath());
+		}
 	}
 
 	/**
