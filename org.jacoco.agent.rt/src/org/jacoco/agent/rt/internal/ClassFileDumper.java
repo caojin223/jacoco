@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.jacoco.core.internal.data.CRC64;
+import org.jacoco.core.runtime.AgentOptions;
 
 /**
  * Internal dumper for class files.
@@ -38,6 +39,8 @@ class ClassFileDumper {
 			this.location = null;
 		} else {
 			this.location = new File(location);
+			AgentOptions.print.printf("ClassFileDumper.location: %s\n",
+					this.location.getAbsolutePath());
 		}
 	}
 
@@ -68,6 +71,8 @@ class ClassFileDumper {
 			final Long id = Long.valueOf(CRC64.classId(contents));
 			final File file = new File(outputdir,
 					String.format("%s.%016x.class", localname, id));
+			AgentOptions.print.printf("ClassFileDumper.file: %s\n",
+					file.getAbsolutePath());
 			final OutputStream out = new FileOutputStream(file);
 			out.write(contents);
 			out.close();

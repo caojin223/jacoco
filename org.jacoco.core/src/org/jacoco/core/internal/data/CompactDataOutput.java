@@ -81,4 +81,8 @@ public class CompactDataOutput extends DataOutputStream {
 		}
 	}
 
+	public void writeBytes(final byte[] value) throws IOException {
+		writeVarInt(value.length);
+		write(value, 0, value.length);
+	}
 }

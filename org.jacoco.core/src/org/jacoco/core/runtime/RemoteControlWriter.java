@@ -12,8 +12,9 @@
  *******************************************************************************/
 package org.jacoco.core.runtime;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.jacoco.core.data.ExecutionDataWriter;
 
@@ -49,14 +50,85 @@ public class RemoteControlWriter extends ExecutionDataWriter
 	 *             in case of problems with the remote connection
 	 */
 	public void sendCmdOk() throws IOException {
-		out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
+		synchronized (out) {
+			out.writeByte(RemoteControlWriter.BLOCK_CMDOK);
+		}
+		flushHeartbeat();
 	}
 
 	public void visitDumpCommand(final boolean dump, final boolean reset)
 			throws IOException {
-		out.writeByte(RemoteControlWriter.BLOCK_CMDDUMP);
-		out.writeBoolean(dump);
-		out.writeBoolean(reset);
+		synchronized (out) {
+			out.writeByte(RemoteControlWriter.BLOCK_CMDDUMP);
+			out.writeBoolean(dump);
+			out.writeBoolean(reset);
+		}
+		flushHeartbeat();
+	}
+
+	public void sendClassFile(String name, byte[] bytes) throws IOException {
+		if (bytes != null && bytes.length > 0) {
+			synchronized (out) {
+				out.writeByte(BLOCK_FILE);
+				out.writeUTF(name);
+				out.writeBytes(bytes);
+			}
+			flushHeartbeat();
+		}
+	}
+
+	public void sendJarEntry(JarFile jar, JarEntry entry) throws IOException {
+		String name = entry.getName();
+		synchronized (out) {
+			out.writeByte(BLOCK_FILE);
+			out.writeUTF(name);
+			InputStream in = jar.getInputStream(entry);
+			long size = entry.getSize();
+			out.writeVarInt((int) size);
+			try {
+				byte[] buffer = new byte[(int) size];
+				int i;
+				while ((i = in.read(buffer)) != -1) {
+					out.write(buffer, 0, i);
+				}
+			} finally {
+				in.close();
+			}
+		}
+		flushHeartbeat();
+	}
+
+	public void sendHeartbeat() throws IOException {
+		synchronized (out) {
+			out.writeByte(BLOCK_HEARTBEAT);
+		}
+		flushHeartbeat();
+	}
+
+	public void sendProjectInfo(String product, String project, String service,
+			String branch, String commit, String gitUrl) throws IOException {
+		synchronized (out) {
+			out.writeByte(BLOCK_PROJECT_INFO);
+			StringBuilder sb = new StringBuilder();
+			sb.append(product);
+			if (project != null) {
+				sb.append("|").append(project);
+			}
+			if (service != null) {
+				sb.append("|").append(service);
+			}
+			if (branch != null) {
+				sb.append("|").append(branch);
+			}
+			if (commit != null) {
+				sb.append("|").append(commit);
+			}
+			if (gitUrl != null) {
+				sb.append("|").append(gitUrl);
+			}
+			out.writeUTF(sb.toString());
+		}
+		flushHeartbeat();
 	}
 
 }

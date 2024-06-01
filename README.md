@@ -14,3 +14,7 @@ License.
 *   I have a question → [FAQ](http://www.jacoco.org/jacoco/trunk/doc/faq.html), [Documentation](http://www.jacoco.org/jacoco/trunk/doc/), [User Forum](https://groups.google.com/forum/?fromgroups=#!forum/jacoco)
 *   I found a bug → [Bug Report](https://github.com/jacoco/jacoco/issues/new/choose)
 *   I have an idea → [User Forum](https://groups.google.com/forum/?fromgroups=#!forum/jacoco), [Feature Request](https://github.com/jacoco/jacoco/issues/new/choose)
+
+mvn spotless:apply -s /Users/jancao/.m2/settings-empty.xml
+mvn com.diffplug.spotless:spotless-maven-plugin:apply -s /Users/jancao/.m2/settings-empty.xml
+mvn clean install -s /Users/jancao/.m2/settings-empty.xml -DskipTests -Dmaven.test.skip=true

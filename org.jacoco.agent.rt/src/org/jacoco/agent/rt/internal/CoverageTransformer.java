@@ -91,6 +91,8 @@ public class CoverageTransformer implements ClassFileTransformer {
 			classFileDumper.dump(classname, classfileBuffer);
 			return instrumenter.instrument(classfileBuffer, classname);
 		} catch (final Exception ex) {
+			AgentOptions.print.printf("%s.transform error\n",
+					this.getClass().getSimpleName());
 			final IllegalClassFormatException wrapper = new IllegalClassFormatException(
 					ex.getMessage());
 			wrapper.initCause(ex);

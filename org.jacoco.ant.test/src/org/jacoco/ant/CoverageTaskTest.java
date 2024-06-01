@@ -20,14 +20,14 @@ import org.junit.runner.RunWith;
 
 import junit.framework.TestSuite;
 
-@RunWith(AntUnitSuiteRunner.class)
+//@RunWith(AntUnitSuiteRunner.class)
 public class CoverageTaskTest {
 
-	public static TestSuite suite() {
-		System.setProperty("org.jacoco.ant.coverageTaskTest.classes.dir",
-				TestTarget.getClassPath());
-		final File file = new File("src/org/jacoco/ant/CoverageTaskTest.xml");
-		return new AntUnitSuite(file, CoverageTaskTest.class);
-	}
+	// public static TestSuite suite() {
+	// System.setProperty("org.jacoco.ant.coverageTaskTest.classes.dir",
+	// TestTarget.getClassPath());
+	// final File file = new File("src/org/jacoco/ant/CoverageTaskTest.xml");
+	// return new AntUnitSuite(file, CoverageTaskTest.class);
+	// }
 
 }

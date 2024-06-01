@@ -12,14 +12,12 @@
  *******************************************************************************/
 package org.jacoco.agent.rt.internal.output;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.jacoco.core.runtime.IRemoteCommandVisitor;
-import org.jacoco.core.runtime.RemoteControlReader;
-import org.jacoco.core.runtime.RemoteControlWriter;
-import org.jacoco.core.runtime.RuntimeData;
+import org.jacoco.core.runtime.*;
 
 /**
  * Handler for a single socket based remote connection.
@@ -46,6 +44,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 		this.writer = new RemoteControlWriter(socket.getOutputStream());
 		this.reader = new RemoteControlReader(socket.getInputStream());
 		this.reader.setRemoteCommandVisitor(this);
+		this.reader.setRemoteWriter(this.writer);
 		this.initialized = true;
 	}
 
@@ -90,7 +89,7 @@ class TcpConnection implements IRemoteCommandVisitor {
 	 * @throws IOException
 	 */
 	public void close() throws IOException {
-		if (!socket.isClosed()) {
+		if (socket != null && !socket.isClosed()) {
 			socket.close();
 		}
 	}
@@ -107,6 +106,30 @@ class TcpConnection implements IRemoteCommandVisitor {
 			}
 		}
 		writer.sendCmdOk();
+	}
+
+	public void sendHeartbeat() throws IOException {
+		writer.sendHeartbeat();
+	}
+
+	public void sendProjectInfo(String product, String project, String service,
+			String branch, String commit, String classDir, String gitUrl,
+			File jarFile) throws IOException {
+		reader.setServer(classDir, jarFile);
+		writer.sendProjectInfo(product, project, service, branch, commit,
+				gitUrl);
+	}
+
+	// public void sendJarClasses() throws IOException {
+	// reader.sendJarClasses();
+	// }
+
+	public void setMatcher(WildcardMatcher includes, WildcardMatcher excludes) {
+		reader.setMatcher(includes, excludes);
+	}
+
+	public void setHeartbeat(AtomicLong heartbeat) {
+		this.writer.setHeartbeat(heartbeat);
 	}
 
 }

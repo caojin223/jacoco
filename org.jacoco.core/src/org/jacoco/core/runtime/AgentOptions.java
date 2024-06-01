@@ -15,13 +15,11 @@ package org.jacoco.core.runtime;
 import static java.lang.String.format;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -33,6 +31,40 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public final class AgentOptions {
+
+	public static PrintStream print = null;
+
+	static final SimpleDateFormat SDF = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm:ss:SSS");
+
+	private static synchronized String getTimeStr() {
+		return SDF.format(new Date());
+	}
+
+	static {
+		try {
+			File folder = new File("/tmp/jacoco");
+			if (!folder.exists()) {
+				folder.mkdirs();
+			}
+			File logFile = new File(folder, "jacocoAgent.log");
+			print = new PrintStream(new FileOutputStream(logFile), true) {
+				@Override
+				public PrintStream printf(String format, Object... args) {
+					format = getTimeStr() + " -> " + format;
+					return super.printf(format, args);
+				}
+
+				@Override
+				public void println(String x) {
+					x = getTimeStr() + " -> " + x;
+					super.println(x);
+				}
+			};
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Specifies the output file for execution data. Default is
@@ -145,6 +177,13 @@ public final class AgentOptions {
 		tcpclient,
 
 		/**
+		 * Value for the {@link AgentOptions#OUTPUT} parameter: At startup the
+		 * agent connects to a TCP port specified by the
+		 * {@link AgentOptions#ADDRESS} and {@link AgentOptions#PORT} attribute.
+		 */
+		tcpcycle,
+
+		/**
 		 * Value for the {@link AgentOptions#OUTPUT} parameter: Do not produce
 		 * any output.
 		 */
@@ -183,16 +222,70 @@ public final class AgentOptions {
 	 */
 	public static final String CLASSDUMPDIR = "classdumpdir";
 
+	public static final String TEMPPATH = "/tmp/jacoco/classes";
+
 	/**
 	 * Specifies whether the agent should expose functionality via JMX under the
 	 * name "org.jacoco:type=Runtime". Default is <code>false</code>.
 	 */
 	public static final String JMX = "jmx";
 
+	// /**
+	// * 项目名，用于项目识别
+	// */
+	// public static final String PROJECT = "project";
+
+	/**
+	 * 服务名，用于Module识别
+	 */
+	public static final String SERVICE = "service";
+
+	/**
+	 * 分支名，用于分类管理class和source等文件
+	 */
+	public static final String BRANCH = "branch";
+
+	/**
+	 * 提交hash，用于分类管理class和source等文件
+	 */
+	public static final String COMMIT = "commit";
+
+	/**
+	 * 心跳间隔，单位为秒
+	 */
+	public static final String HEARTBEAT = "heartbeat";
+
+	/**
+	 * 项目Gitlab地址，用于通知服务端拉取代码
+	 */
+	public static final String GITURL = "giturl";
+
+	/**
+	 * 目标服务的地址，用于解压获得classes文件
+	 */
+	public static final String JARPATH = "jarpath";
+
+	/**
+	 * 从环境变量提取时的关键字
+	 */
+	public final Map<String, String> envMap = new HashMap<String, String>() {
+		{
+			put(INCLUDES, "INCLUDES_PACKAGE");
+			put(ADDRESS, "JACOCO_SERVER");
+			// 被测服务的名称
+			put(SERVICE, "appName");
+			put(GITURL, "GIT_URL");
+			put(JARPATH, "JAR_PATH");
+			put(BRANCH, "ORIGIN_BRANCH");
+			put(COMMIT, "COMMIT_SHORT_SHA");
+		}
+	};
+
 	private static final Collection<String> VALID_OPTIONS = Arrays.asList(
 			DESTFILE, APPEND, INCLUDES, EXCLUDES, EXCLCLASSLOADER,
 			INCLBOOTSTRAPCLASSES, INCLNOLOCATIONCLASSES, SESSIONID, DUMPONEXIT,
-			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX);
+			OUTPUT, ADDRESS, PORT, CLASSDUMPDIR, JMX, SERVICE, BRANCH, COMMIT,
+			HEARTBEAT, GITURL, JARPATH);
 
 	private final Map<String, String> options;
 
@@ -525,7 +618,7 @@ public final class AgentOptions {
 	 * @return dump location or <code>null</code> (no dumps)
 	 */
 	public String getClassDumpDir() {
-		return getOption(CLASSDUMPDIR, null);
+		return getOption(CLASSDUMPDIR, TEMPPATH);
 	}
 
 	/**
@@ -633,6 +726,32 @@ public final class AgentOptions {
 		return CommandLineSupport.quote(args);
 	}
 
+	public String getSERVICE() {
+		return getOption(SERVICE, null);
+	}
+
+	public String getBranch() {
+		return getOption(BRANCH, null);
+	}
+
+	public String getCommit() {
+		return getOption(COMMIT, null);
+	}
+
+	/**
+	 * 默认30分钟间隔心跳
+	 */
+	public int getHeartbeat() {
+		return getOption(HEARTBEAT, 30 * 60);
+	}
+
+	/**
+	 * 获取项目的Gitlab地址
+	 */
+	public String getGitUrl() {
+		return getOption(GITURL, "");
+	}
+
 	/**
 	 * Creates a string representation that can be passed to the agent via the
 	 * command line. Might be the empty string, if no options are set.
@@ -652,4 +771,7 @@ public final class AgentOptions {
 		return sb.toString();
 	}
 
+	public Map<String, String> getOptions() {
+		return options;
+	}
 }
