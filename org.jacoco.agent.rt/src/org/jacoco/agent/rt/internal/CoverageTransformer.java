@@ -12,15 +12,15 @@
  *******************************************************************************/
 package org.jacoco.agent.rt.internal;
 
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
-
 import org.jacoco.core.instr.Instrumenter;
 import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.IRuntime;
 import org.jacoco.core.runtime.WildcardMatcher;
+
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 
 /**
  * Class file transformer to instrument classes for code coverage analysis.
@@ -91,6 +91,8 @@ public class CoverageTransformer implements ClassFileTransformer {
 			classFileDumper.dump(classname, classfileBuffer);
 			return instrumenter.instrument(classfileBuffer, classname);
 		} catch (final Exception ex) {
+			AgentOptions.print.printf("%s.transform error\n",
+					this.getClass().getSimpleName());
 			final IllegalClassFormatException wrapper = new IllegalClassFormatException(
 					ex.getMessage());
 			wrapper.initCause(ex);

@@ -7,8 +7,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *    Brock Janiczak - initial API and implementation
- *    Marc R. Hoffmann - migration to mock socket
+ *    Marc R. Hoffmann - initial API and implementation
  *
  *******************************************************************************/
 package org.jacoco.agent.rt.internal.output;

@@ -12,13 +12,16 @@
  *******************************************************************************/
 package org.jacoco.core.runtime;
 
-import java.io.*;
-import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
 import org.jacoco.core.data.ExecutionDataReader;
 import org.jacoco.core.data.ExecutionDataWriter;
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * {@link ExecutionDataReader} with commands added for runtime remote control.
@@ -207,6 +210,7 @@ public class RemoteControlReader extends ExecutionDataReader {
 		if (writer == null) {
 			return;
 		}
+		AgentOptions.print.printf("Accept jars list: %s\n", listStr);
 		Set jars = listStr.isEmpty() ? null
 				: new HashSet(Arrays.asList(listStr.split("\\|")));
 		sendJarClasses(jarFile, jars);
@@ -225,14 +229,23 @@ public class RemoteControlReader extends ExecutionDataReader {
 						String[] split = name.split("/");
 						String jarName = split[split.length - 1];
 						if (jars.contains(jarName)) {
+							AgentOptions.print.printf("Match jar: %s\n", name);
 							createSubJar(jar, entry, jars);
+						} else {
+							AgentOptions.print.printf("Skip jar: %s\n", name);
 						}
 					} else if (name.endsWith(".class")
 							&& !name.startsWith(spring)) {
+						AgentOptions.print.printf("Send class: %s\n",
+								entry.getName());
 						writer.sendJarEntry(jar, entry);
 					}
 				}
 			}
+		} catch (IOException e) {
+			AgentOptions.print.printf("Error: %s\n", e.getMessage());
+			e.printStackTrace(AgentOptions.print);
+			throw e;
 		} finally {
 			jar.close();
 		}
@@ -240,8 +253,7 @@ public class RemoteControlReader extends ExecutionDataReader {
 
 	private void createSubJar(JarFile jar, JarEntry entry, Set jars)
 			throws IOException {
-		File file = new File(new File(System.getProperty("user.dir")),
-				"target/temp/" + entry.getName());
+		File file = new File(new File(AgentOptions.TEMPPATH), entry.getName());
 		file.delete();
 		file.getParentFile().mkdirs();
 		OutputStream out = new FileOutputStream(file);

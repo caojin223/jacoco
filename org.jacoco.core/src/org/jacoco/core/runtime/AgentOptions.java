@@ -12,17 +12,15 @@
  *******************************************************************************/
 package org.jacoco.core.runtime;
 
-import static java.lang.String.format;
-
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 /**
  * Utility to create and parse options for the runtime agent. Options are
@@ -33,6 +31,40 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public final class AgentOptions {
+
+	public static PrintStream print = null;
+
+	static final SimpleDateFormat SDF = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm:ss:SSS");
+
+	private static synchronized String getTimeStr() {
+		return SDF.format(new Date());
+	}
+
+	static {
+		try {
+			File folder = new File("/tmp/jacoco");
+			if (!folder.exists()) {
+				folder.mkdirs();
+			}
+			File logFile = new File(folder, "jacocoAgent.log");
+			print = new PrintStream(new FileOutputStream(logFile), true) {
+				@Override
+				public PrintStream printf(String format, Object... args) {
+					format = getTimeStr() + " -> " + format;
+					return super.printf(format, args);
+				}
+
+				@Override
+				public void println(String x) {
+					x = getTimeStr() + " -> " + x;
+					super.println(x);
+				}
+			};
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Specifies the output file for execution data. Default is
@@ -189,6 +221,8 @@ public final class AgentOptions {
 	 * Default is <code>null</code> (no dumps).
 	 */
 	public static final String CLASSDUMPDIR = "classdumpdir";
+
+	public static final String TEMPPATH = "/tmp/jacoco/classes";
 
 	/**
 	 * Specifies whether the agent should expose functionality via JMX under the
@@ -584,7 +618,7 @@ public final class AgentOptions {
 	 * @return dump location or <code>null</code> (no dumps)
 	 */
 	public String getClassDumpDir() {
-		return getOption(CLASSDUMPDIR, null);
+		return getOption(CLASSDUMPDIR, TEMPPATH);
 	}
 
 	/**
@@ -705,10 +739,10 @@ public final class AgentOptions {
 	}
 
 	/**
-	 * 默认200分钟间隔心跳
+	 * 默认30分钟间隔心跳
 	 */
 	public int getHeartbeat() {
-		return getOption(HEARTBEAT, 200 * 60 * 60);
+		return getOption(HEARTBEAT, 30 * 60);
 	}
 
 	/**

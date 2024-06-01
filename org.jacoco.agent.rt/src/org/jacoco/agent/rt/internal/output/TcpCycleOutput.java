@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 Mountainminds GmbH & Co. KG and Contributors
+ * Copyright (c) 2009, 2023 Mountainminds GmbH & Co. KG and Contributors
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which is available at
  * http://www.eclipse.org/legal/epl-2.0
@@ -17,12 +17,11 @@ import org.jacoco.core.runtime.AgentOptions;
 import org.jacoco.core.runtime.RuntimeData;
 import org.jacoco.core.runtime.WildcardMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -40,7 +39,22 @@ public class TcpCycleOutput implements IAgentOutput {
 
 	private Thread heartbeatThread;
 
-	private final String printHeader = "-----jacoco----------> ";
+	/**
+	 * 默认的环境变量名
+	 */
+	private final String appPath = "appPath";
+
+	private final String master = "master";
+	private final String feature = "feature/";
+
+	/**
+	 * 需要排除的白名单
+	 */
+	private final Set<String> ignoreSet = new HashSet<String>() {
+		{
+			add("otel-extension.jar");
+		}
+	};
 
 	private volatile boolean running = true;
 
@@ -86,11 +100,27 @@ public class TcpCycleOutput implements IAgentOutput {
 
 				try {
 					checkArgs();
-					initMatcher();
+//					if (master.equals(branch) || branch.startsWith(feature)) {
+					if (master.equals(branch)) {
+						options.setIncludes("-");
+						options.setExcludes("*");
+						AgentOptions.print.printf(
+								"The current branch [%s] do not need to collect coverage data\n",
+								branch);
+						return;
+					} else {
+						AgentOptions.print.printf(
+								"The current branch [%s] needs to collect coverage data\n",
+								branch);
+					}
 				} catch (IllegalArgumentException e) {
-					System.err.printf("%s 启动参数错误: %s\n", getTimeStr(), options);
-					e.printStackTrace();
+					options.setIncludes("-");
+					options.setExcludes("*");
+					AgentOptions.print.printf("boot args error: %s\n", options);
+					e.printStackTrace(AgentOptions.print);
 					return;
+				} finally {
+					initMatcher();
 				}
 
 				int i = 0;
@@ -98,7 +128,8 @@ public class TcpCycleOutput implements IAgentOutput {
 					Socket socket = null;
 					try {
 						socket = createSocket(options);
-						System.out.printf(printHeader + "%s已连接服务端%s%n",
+						AgentOptions.print.printf(
+								"%s already connected server%s%n",
 								socket.getLocalSocketAddress(),
 								socket.getRemoteSocketAddress());
 						heartbeatThread = new Thread(
@@ -121,8 +152,8 @@ public class TcpCycleOutput implements IAgentOutput {
 					} catch (final IOException e) {
 						if (e instanceof SocketException) {
 							if ("Connection reset".equals(e.getMessage())) {
-								System.err.println(
-										printHeader + "Socket disconnect");
+								AgentOptions.print.println(
+										"SocketException: " + e.getMessage());
 							}
 						}
 					} finally {
@@ -131,17 +162,20 @@ public class TcpCycleOutput implements IAgentOutput {
 								socket.close();
 								heartbeatThread.interrupt();
 							} catch (IOException e) {
-								e.printStackTrace();
+								e.printStackTrace(AgentOptions.print);
 							}
 						}
 					}
-					// System.err.println(printHeader + "与服务端连接断开");
-					sleeper(10 * 1000
-							* (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18)));
+					int millis = 10 * 1000
+							* (i < 30 ? 1 : (i < 100 ? 2 * i / 30 : 18));
+					AgentOptions.print.printf(
+							"The connection to the server has been disconnected and is about to sleep for %s s\n",
+							millis / 1000);
+					sleeper(millis);
 					if (running) {
-						System.err.printf("%s %s 尝试重连中 -> %s:%s ......，第%d次\n",
-								getTimeStr(), printHeader, options.getAddress(),
-								options.getPort(), ++i);
+						AgentOptions.print.printf(
+								"Try to reconnect to -> %s:%s ......, the %d times\n",
+								options.getAddress(), options.getPort(), ++i);
 					}
 				}
 			}
@@ -151,18 +185,14 @@ public class TcpCycleOutput implements IAgentOutput {
 		worker.start();
 	}
 
-	final SimpleDateFormat sdf = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm:ss:SSS");
-
-	private synchronized String getTimeStr() {
-		// long timestamp = System.currentTimeMillis();
-		return sdf.format(new Date());
-	}
-
 	public void shutdown() throws Exception {
+		AgentOptions.print.println("shutdown");
 		running = false;
 		if (connection != null) {
 			connection.close();
+		}
+		if (AgentOptions.print != null) {
+			AgentOptions.print.close();
 		}
 		worker.join();
 	}
@@ -190,7 +220,7 @@ public class TcpCycleOutput implements IAgentOutput {
 		try {
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			e.printStackTrace(AgentOptions.print);
 			Thread.currentThread().interrupt();
 		}
 	}
@@ -202,7 +232,7 @@ public class TcpCycleOutput implements IAgentOutput {
 		// AgentOptions.INCLUDES + " is required.");
 		// }
 		assertGetEnv(AgentOptions.ADDRESS);
-		classDir = getArg(AgentOptions.CLASSDUMPDIR, "classes");
+		classDir = getArg(AgentOptions.CLASSDUMPDIR, AgentOptions.TEMPPATH);
 		branch = assertGetEnv(AgentOptions.BRANCH);
 		commit = assertGetEnv(AgentOptions.COMMIT);
 		interval = options.getHeartbeat();
@@ -214,21 +244,23 @@ public class TcpCycleOutput implements IAgentOutput {
 		analyzeGitUrl(gitUrl);
 		service = assertGetEnv(AgentOptions.SERVICE);
 		/* jarpath可指定被测服务的jar包地址，不传时，默认到/app目录下查找 */
-		jarpath = getArg(AgentOptions.JARPATH, "");
+		jarpath = getArg(AgentOptions.JARPATH, System.getenv().get(appPath));
 		if ("".equals(jarpath)) {
 			File jarParent = new File("/app");
 			if (jarParent.exists()) {
 				File[] subs = jarParent.listFiles();
+				List<File> jars = new ArrayList<File>();
 				for (File sub : subs) {
-					if (!sub.isDirectory() && sub.getName().endsWith(".jar")) {
-						if (jarFile == null) {
-							jarFile = sub;
-						} else {
-							throw new IllegalArgumentException(
-									"More than one jar in /app folder: "
-											+ Arrays.toString(subs));
-						}
+					String name = sub.getName();
+					if (!sub.isDirectory() && name.endsWith(".jar")
+							&& !ignoreSet.contains(name)) {
+						jars.add(sub);
 					}
+				}
+				if (jars.size() == 1) {
+					jarFile = jars.get(0);
+				} else if (jars.size() > 1) {
+					jarFile = getJarByList(jars);
 				}
 			} else {
 				throw new IllegalArgumentException("/app folder is not exist");
@@ -254,8 +286,8 @@ public class TcpCycleOutput implements IAgentOutput {
 				throw new IllegalArgumentException(err + " is required.");
 			} else {
 				options.getOptions().put(key, value);
-				System.out.println(
-						printHeader + "get " + envKey + " from ENV: " + value);
+				AgentOptions.print
+						.println("get " + envKey + " from ENV: " + value);
 			}
 		}
 		return value;
@@ -267,6 +299,9 @@ public class TcpCycleOutput implements IAgentOutput {
 			value = System.getenv().get(key);
 		}
 		if (value == null) {
+			if (defaultValue == null || !defaultValue.endsWith(".jar")) {
+				defaultValue = "";
+			}
 			options.getOptions().put(key, defaultValue);
 			value = defaultValue;
 		}
@@ -289,6 +324,22 @@ public class TcpCycleOutput implements IAgentOutput {
 		excludes = new WildcardMatcher(options.getExcludes().replace('.', '/'));
 	}
 
+	private File getJarByList(List<File> files) {
+		File jar = null;
+		for (File file : files) {
+			if (file.getName().contains("-starter-")) {
+				if (jar == null) {
+					jar = file;
+				} else {
+					throw new IllegalArgumentException(
+							"More than one jar in /app folder: "
+									+ Arrays.toString(files.toArray()));
+				}
+			}
+		}
+		return jar;
+	}
+
 	static class Heartbeat implements Runnable {
 		private final Socket socket;
 		private final TcpCycleOutput cycle;
@@ -302,13 +353,13 @@ public class TcpCycleOutput implements IAgentOutput {
 		public void run() {
 			int interval = cycle.interval * 1000;
 			try {
-				System.out.printf(cycle.printHeader + "心跳间隔%ss.%n",
+				AgentOptions.print.printf("Heart beat interval %ss.%n",
 						cycle.interval);
 				while (socket.isConnected()) {
 					long cost = System.currentTimeMillis()
 							- cycle.heartbeat.get();
 					if (cost >= interval) {
-						System.out.println("♥");
+						AgentOptions.print.println("♥");
 						cycle.connection.sendHeartbeat();
 						synchronized (this) {
 							wait(interval);
@@ -320,10 +371,10 @@ public class TcpCycleOutput implements IAgentOutput {
 						}
 					}
 				}
-				System.out.println(cycle.printHeader + "心跳停止%n");
+				AgentOptions.print.println("Heart beat stopped%n");
 			} catch (Exception e) {
 				if (!(e instanceof InterruptedException)) {
-					e.printStackTrace();
+					e.printStackTrace(AgentOptions.print);
 				}
 			}
 		}

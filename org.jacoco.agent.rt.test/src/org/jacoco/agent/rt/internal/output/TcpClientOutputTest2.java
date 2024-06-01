@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2022 Mountainminds GmbH & Co. KG and Contributors
+ * Copyright (c) 2009, 2023 Mountainminds GmbH & Co. KG and Contributors
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which is available at
  * http://www.eclipse.org/legal/epl-2.0
@@ -7,8 +7,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *    Brock Janiczak - initial API and implementation
- *    Marc R. Hoffmann - migration to mock socket
+ *    Marc R. Hoffmann - initial API and implementation
  *
  *******************************************************************************/
 package org.jacoco.agent.rt.internal.output;
@@ -80,10 +79,11 @@ public class TcpClientOutputTest2 {
 				// + "includes=cn.devops.*,"
 				+ "giturl=ssh://git@bitbucket.kucoin.net/kcmg/margin-fund.git,"
 				+ "service=margin-fund,branch=release/code_test_v2,"
+				// + "service=margin-fund,branch=feature/code_test_v2,"
 				+ "commit=95dff3ed,"
 				+ "classdumpdir=target/jk/classes/product1,"
 				+ "jarpath=C:/Users/caoji/Desktop/agentTest/margin-fund/margin-fund-starter.jar,"
-				+ "address=192.168.2.107";
+				+ "address=10.100.32.72";
 		// kcmg|margin-fund|margin-fund|release-code_test_v2|95dff3ed|ssh://git@bitbucket.kucoin.net/kcmg/margin-fund.git
 		controller.startup(new AgentOptions(arg), data);
 	}
@@ -153,6 +153,13 @@ public class TcpClientOutputTest2 {
 		ExecutionData foo = data.getExecutionData(Long.valueOf(0x12345678),
 				"Foo", 42);
 		foo.getProbes()[0] = true;
+		foo.getProbes()[3] = true;
+		foo.getProbes()[5] = true;
+		foo.getProbes()[7] = true;
+		foo.getProbes()[8] = true;
+		foo.getProbes()[11] = true;
+		foo.getProbes()[15] = true;
+		foo.getProbes()[37] = true;
 		data.setSessionId("stubid");
 		// ExtraInfo extraInfo = new ExtraInfo("jk", "dms", "12345");
 		// data.setExtraInfo(extraInfo.toString());

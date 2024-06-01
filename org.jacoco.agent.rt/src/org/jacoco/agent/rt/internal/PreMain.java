@@ -44,12 +44,12 @@ public final class PreMain {
 	public static void premain(final String options, final Instrumentation inst)
 			throws Exception {
 
-		System.out.printf("-----jacoco----------> %s startup: %s%n", VERSION,
-				options);
-		System.out.println("-----jacoco----------> WorkDir: "
-				+ System.getProperty("user.dir"));
 		System.setProperty("agentVersion", VERSION);
 		final AgentOptions agentOptions = new AgentOptions(options);
+
+		AgentOptions.print.printf("%s startup: %s%n", VERSION, options);
+		AgentOptions.print
+				.println("WorkDir: " + System.getProperty("user.dir"));
 
 		final Agent agent = Agent.getInstance(agentOptions);
 
